@@ -180,6 +180,72 @@ argocd login <external-ip> --username admin --insecure
 
 ---
 
+## Phase 3 — Cluster Infrastructure via GitOps
+
+### What this does
+
+Bootstraps the App of Apps pattern: a single root Application (`cluster-infra`) watches `argocd/argocd/apps/cluster-infra/` in the repo and creates an ArgoCD Application for each manifest it finds. Currently deploys Grafana; add more tools by dropping Application manifests into that directory.
+
+**Decisions baked in:**
+- Root app: `cluster-infra` Application pointing at `argocd/argocd/apps/cluster-infra/`
+- Grafana: Helm chart from `grafana/grafana`, values from `argocd/cluster-infra/grafana/values.yaml`
+- Grafana service: ClusterIP (port-forward to access) — change to LoadBalancer in `values.yaml` for persistent access
+- No persistence on Grafana — keeps teardown clean
+
+### Prerequisites
+
+- Phase 2 complete (ArgoCD running, external IP known)
+- ArgoCD CLI installed (`brew install argocd`)
+- Changes pushed to `https://github.com/creid-octopus/iac-octopus` — ArgoCD pulls from the remote, not your local filesystem
+
+### Setup
+
+**1. Push current changes to GitHub**
+
+```bash
+git add .
+git commit -m "feat: phase 3 cluster infrastructure"
+git push
+```
+
+**2. Run the bootstrap script**
+
+```bash
+ARGOCD_SERVER=<external-ip> ARGOCD_PASSWORD=<admin-password> ./scripts/bootstrap.sh
+```
+
+**3. Watch ArgoCD sync**
+
+```bash
+argocd app list
+argocd app get cluster-infra
+```
+
+The `cluster-infra` app will appear first, then Grafana will be created as a child application and synced.
+
+### Accessing Grafana
+
+Grafana runs as ClusterIP — use port-forward to access it:
+
+```bash
+kubectl port-forward svc/grafana 3000:80 -n monitoring --context argocd-demo
+# then open http://localhost:3000 — login with admin/admin
+```
+
+Or switch `service.type` to `LoadBalancer` in `cluster-infra/grafana/values.yaml` and push — ArgoCD will update the service automatically.
+
+### When the repo goes private
+
+Run once after adding repo credentials:
+
+```bash
+GITHUB_PAT=<your-pat> argocd repo add https://github.com/creid-octopus/iac-octopus \
+  --username creid-octopus \
+  --password "$GITHUB_PAT"
+```
+
+---
+
 ## Directory Structure
 
 ```
