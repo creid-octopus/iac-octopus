@@ -29,6 +29,13 @@ resource "azurerm_kubernetes_cluster" "main" {
 
     # Required when changing node pool VM size in-place
     temporary_name_for_rotation = "systemtmp"
+
+    # Declare AKS defaults explicitly to prevent perpetual plan diff
+    upgrade_settings {
+      drain_timeout_in_minutes      = 0
+      max_surge                     = "10%"
+      node_soak_duration_in_minutes = 0
+    }
   }
 
   # System-assigned managed identity — no service principal or credential rotation needed

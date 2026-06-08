@@ -11,10 +11,26 @@ environment         = "demo"
 
 # kubernetes_version = "1.30"  # Uncomment to pin; leave unset for latest default
 
-# ArgoCD admin password — store the BCRYPT HASH here, not the plaintext password
-
-# Generate: python3 -c "import bcrypt; print(bcrypt.hashpw(b'yourpassword', bcrypt.gensalt(10)).decode())"
-# OR
-# htpasswd -nbBC 10 "" yourpassword | tr -d ':\n'
+# ArgoCD admin password — two entries needed:
+#   1. Bcrypt hash for the Helm chart (sets the password on install/upgrade)
+#   2. Plaintext for the local-exec token generation script (never stored in TF state)
+# Generate hash: python3 -c "import bcrypt; print(bcrypt.hashpw(b'yourpassword', bcrypt.gensalt(10)).decode())"
 
 argocd_admin_password_hash = "$2a$10$REPLACE_WITH_YOUR_HASH"
+argocd_admin_password      = "REPLACE_WITH_PLAINTEXT_PASSWORD"
+
+# ArgoCD public URL — computed automatically from LoadBalancer IP during apply.
+# Only set this to override (e.g. when using a custom DNS name).
+# argocd_web_ui_url = "https://argocd.yourdomain.com"
+argocd_insecure   = true
+
+# ─── Octopus Deploy ──────────────────────────────────────────────────────────
+octopus_api_url      = "https://demo.octopus.app"
+octopus_grpc_url     = "demo.octopus.app:8443"  # 8443 = gRPC server; 443 = REST API (wrong port)
+octopus_api_key      = "API-REPLACE_WITH_YOUR_KEY"
+octopus_space_id     = "Spaces-3705"
+octopus_environments = ["Development", "Test", "Production"]
+
+# ─── Gateway ─────────────────────────────────────────────────────────────────
+gateway_name          = "argocd-demo"
+gateway_chart_version = "1.23.0"  # check https://hub.docker.com/r/octopusdeploy/octopus-argocd-gateway-chart/tags

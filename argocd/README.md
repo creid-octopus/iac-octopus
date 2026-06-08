@@ -8,11 +8,47 @@ GitOps demo environment: AKS cluster with ArgoCD, Octopus Deploy integration, an
 |-------|-------------|--------|
 | 1 | AKS cluster via Terraform | ✅ Complete |
 | 2 | ArgoCD installation and exposure | ✅ Complete |
-| 3 | Cluster infrastructure via GitOps | 🔄 In Progress |
-| 4 | Octopus Deploy integration | ⏳ Pending |
-| 5 | Demo applications | ⏳ Pending |
+| 3 | Cluster infrastructure via GitOps | ✅ Complete |
+| 4 | Octopus Deploy integration | ✅ Complete |
+| 5 | Demo applications | 🔄 In Progress |
 
-See the [Implementation Plan](../../obsidian notes — link separately) for full context.
+---
+
+## Configuration Approach
+
+### How Terraform manages the cluster
+
+`terraform apply` is fully self-contained — it does not require a pre-configured local kubectl context or any prior `az aks get-credentials` run. Specifically:
+
+- The **Helm and Kubernetes providers** connect to AKS directly using credentials from the `azurerm_kubernetes_cluster` resource output, not from `~/.kube/config`.
+- **Local-exec scripts** (ArgoCD token generation, LoadBalancer IP polling) receive `kube_config_raw` as an environment variable and write it to a temp kubeconfig file at runtime. No `--context` flags, no local setup required.
+- The **ArgoCD LoadBalancer IP** is computed during apply by polling the Kubernetes service until Azure assigns it. `argocd_web_ui_url` is derived from this automatically — no need to set it manually unless overriding with a DNS name.
+
+The only inputs Terraform needs from outside are credentials (API keys, passwords) — set via `terraform.tfvars` or `TF_VAR_*` environment variables in `.envrc`.
+
+### What you need for local interaction
+
+After `terraform apply`, run these once to enable local kubectl, ArgoCD CLI, and Headlamp access:
+
+```bash
+# 1. Merge cluster credentials into local kubeconfig
+az aks get-credentials \
+  --resource-group rg-argocd-demo \
+  --name aks-argocd-demo \
+  --context argocd-demo
+
+# 2. Update ARGOCD_SERVER in .envrc with the new IP (changes on every recreation)
+terraform -chdir=argocd/terraform output argocd_server_ip
+# Then update ARGOCD_SERVER in argocd/.envrc and reload:
+direnv reload
+
+# 3. Bootstrap ArgoCD (connects it to the repo, applies the root Application)
+./argocd/scripts/bootstrap.sh
+```
+
+Headlamp picks up the `argocd-demo` context automatically after step 1.
+
+> **On recreation:** The ArgoCD external IP changes each time. Step 2 must be repeated after every `terraform apply` to keep `ARGOCD_SERVER` current.
 
 ---
 
@@ -72,21 +108,9 @@ terraform plan
 terraform apply
 ```
 
-### After apply — configure kubectl and Headlamp
+### After apply
 
-Terraform outputs the exact command to run:
-
-```bash
-terraform output get_credentials_command
-```
-
-This will print something like:
-
-```bash
-az aks get-credentials --resource-group rg-argocd-demo --name aks-argocd-demo --context argocd-demo
-```
-
-Run that command to merge the cluster into your local `~/.kube/config`. Headlamp will pick it up automatically under the `argocd-demo` context.
+See [Configuration Approach → What you need for local interaction](#configuration-approach) above. Run `az aks get-credentials` to configure kubectl and Headlamp, then bootstrap ArgoCD.
 
 Verify the cluster is up:
 
@@ -107,20 +131,7 @@ az aks start --resource-group rg-argocd-demo --name aks-argocd-demo
 
 ### Teardown
 
-Phase 1 only — no pre-destroy steps needed yet (no Kubernetes-created Azure resources exist):
-
-```bash
-cd terraform
-terraform destroy
-```
-
-Also clean up the local kubeconfig context:
-
-```bash
-kubectl config delete-context argocd-demo
-kubectl config delete-cluster argocd-demo
-kubectl config delete-user clusterUser_rg-argocd-demo_aks-argocd-demo
-```
+See the [full teardown instructions](#teardown) below.
 
 ---
 
@@ -164,18 +175,18 @@ This adds: the `argocd` namespace and the ArgoCD Helm release. The LoadBalancer 
 
 ### After apply — get the ArgoCD IP and log in
 
-```bash
-# Get the external IP
-terraform output get_argocd_ip
-# Run the printed kubectl command to retrieve it
+The IP is now a proper Terraform output — no kubectl command needed:
 
-# Open the UI
-open https://<external-ip>
-# Accept the self-signed cert warning
+```bash
+terraform -chdir=argocd/terraform output argocd_server_ip
+```
+
+```bash
+# Open the UI (accept the self-signed cert warning)
+open https://<ip>
 
 # Log in via CLI
-argocd login <external-ip> --username admin --insecure
-# Enter your plaintext password when prompted
+argocd login <ip> --username admin --insecure
 ```
 
 ---
@@ -243,6 +254,127 @@ GITHUB_PAT=<your-pat> argocd repo add https://github.com/creid-octopus/iac-octop
   --username creid-octopus \
   --password "$GITHUB_PAT"
 ```
+
+---
+
+## Phase 4 — Octopus Deploy Integration
+
+### What this does
+
+Installs the **Octopus ArgoCD Gateway** in the cluster — an in-cluster agent that connects to Octopus Cloud via outbound HTTPS. No inbound firewall rules or public ArgoCD API required. ArgoCD Application manifests are annotated to map them to Octopus projects and environments.
+
+Also updates the ArgoCD Helm release to add a dedicated `octopus` service account with the API key and RBAC permissions the gateway needs.
+
+**Decisions baked in:**
+- Gateway chart: `oci://registry-1.docker.io/octopusdeploy/octopus-argocd-gateway-chart` v1.23.0
+- Gateway namespace: `octopus-argocd-gateway`
+- Gateway name in Octopus: `argocd-demo`
+- Space: `CReid - Sandbox` (`Spaces-3705`)
+- Environments: `Development`, `Test`, `Production`
+- ArgoCD account for gateway: `octopus` (apiKey-only, scoped RBAC)
+- ArgoCD insecure: `true` (self-signed cert on internal gRPC connection)
+
+### Prerequisites
+
+- Phase 2 and 3 complete
+- `argocd` CLI installed (`brew install argocd`)
+- `nc` (netcat) available — used by the token generation script
+
+### Setup
+
+**1. Add Phase 4 values to `terraform.tfvars`**
+
+```hcl
+argocd_admin_password = "your-plaintext-password"
+argocd_web_ui_url     = "https://YOUR_EXTERNAL_IP"
+argocd_insecure       = true
+octopus_api_key       = "API-YOUR-KEY-HERE"
+```
+
+The other Phase 4 variables have correct defaults in `variables.tf` — only override if needed.
+
+**2. Re-init and apply**
+
+```bash
+cd argocd/terraform
+terraform init   # picks up null and time providers
+terraform plan
+terraform apply
+```
+
+`terraform apply` will:
+1. Update ArgoCD (Helm upgrade to add the `octopus` account)
+2. Wait 30s for ArgoCD to restart
+3. Run a local-exec script that port-forwards to ArgoCD, generates an API token for the `octopus` account, and stores it as a Kubernetes secret
+4. Install the gateway Helm chart, which reads that secret and registers with Octopus Cloud
+
+### Verifying the connection
+
+```bash
+# Watch gateway logs — should show successful registration with Octopus
+terraform output get_gateway_logs
+# (run the printed kubectl command)
+```
+
+In Octopus Deploy → `CReid - Sandbox` → Infrastructure → Deployment Targets, `argocd-demo` should appear as a connected target.
+
+### gRPC URL note
+
+Octopus Cloud exposes two endpoints on different ports — **8443 for gRPC** (used by the gateway) and **443 for the REST API**. Using 443 will result in a 401 with `application/json` content-type in the gateway logs, which is the REST API responding to a gRPC request. Always use 8443.
+
+### ArgoCD CLI context note
+
+The `argocd` CLI persists server contexts in `~/.config/argocd/config`. If `bootstrap.sh` was previously run with the external IP, that context remains as the active one. The token generation script explicitly passes `--server localhost:18080` and calls `argocd context localhost:18080` to avoid silently falling back to a stale external IP context.
+
+---
+
+## Teardown
+
+Run in this order to avoid orphaned Azure resources.
+
+### Step 1 — pre-destroy
+
+```bash
+ARGOCD_SERVER=<ip> ARGOCD_PASSWORD=<password> ./scripts/pre-destroy.sh
+```
+
+This logs into ArgoCD, cascade-deletes the `cluster-infra` app (which removes Grafana and any other managed apps), waits 30s for Kubernetes to clean up, then removes the `argocd-demo` context from your local kubeconfig.
+
+### Step 2 — terraform destroy
+
+```bash
+cd argocd/terraform
+terraform destroy
+```
+
+This removes (in dependency order): the gateway Helm release, the ArgoCD Helm release, the AKS cluster, and the resource group. Deleting the AKS cluster also deletes the managed node resource group (`MC_*`), which cleans up the ArgoCD LoadBalancer IP and any Azure Disks.
+
+### Known teardown notes
+
+- **ArgoCD LoadBalancer IP**: Released when the AKS cluster is deleted (it lives in the `MC_` resource group). No manual cleanup needed.
+- **Grafana disks**: Persistence is disabled, so no Azure Disks are created.
+- **kubeconfig**: Cleaned by `pre-destroy.sh`. If you skip the script, clean up manually:
+  ```bash
+  kubectl config delete-context argocd-demo
+  kubectl config delete-cluster argocd-demo
+  kubectl config delete-user clusterUser_rg-argocd-demo_aks-argocd-demo
+  ```
+- **Static Public IP**: Not applicable — we're using a dynamic IP assigned by the LoadBalancer service, which is released with the cluster.
+
+### Recreating after teardown
+
+```bash
+cd argocd/terraform
+terraform apply
+
+# Reconfigure kubectl and Headlamp
+az aks get-credentials --resource-group rg-argocd-demo --name aks-argocd-demo --context argocd-demo
+
+# Bootstrap ArgoCD (note: the external IP will be different after recreation)
+ARGOCD_SERVER=<new-ip> ARGOCD_PASSWORD=<password> ./scripts/bootstrap.sh
+```
+
+> The ArgoCD external IP changes on every recreation. Update `ARGOCD_SERVER` in your `.envrc` after each recreate.
 
 ---
 

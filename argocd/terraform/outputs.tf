@@ -19,12 +19,22 @@ output "get_credentials_command" {
   value       = "az aks get-credentials --resource-group ${azurerm_resource_group.main.name} --name ${azurerm_kubernetes_cluster.main.name} --context argocd-demo"
 }
 
-output "get_argocd_ip" {
-  description = "Run after apply to get the ArgoCD LoadBalancer IP (may take ~60s after apply for Azure to assign)"
-  value       = "kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].ip}' --context argocd-demo"
+output "argocd_server_ip" {
+  description = "ArgoCD LoadBalancer IP — computed during apply"
+  value       = local.argocd_external_ip
 }
 
 output "argocd_login_command" {
   description = "ArgoCD CLI login command — fill in the IP from get_argocd_ip"
   value       = "argocd login <EXTERNAL-IP> --username admin --insecure"
+}
+
+output "get_gateway_token" {
+  description = "Inspect the ArgoCD token the gateway is using"
+  value       = "kubectl get secret argocd-gateway-token -n octopus-argocd-gateway -o jsonpath='{.data.ARGOCD_AUTH_TOKEN}' --context argocd-demo | base64 --decode && echo"
+}
+
+output "get_gateway_logs" {
+  description = "Tail gateway logs to verify Octopus connection"
+  value       = "kubectl logs -l app.kubernetes.io/name=octopus-argocd-gateway -n octopus-argocd-gateway --context argocd-demo -f"
 }

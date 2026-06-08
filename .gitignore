@@ -15,5 +15,11 @@ kubeconfig
 # (add per-directory .envrc to .gitignore if they contain real values)
 **/.envrc
 
+# Terraform temporary files written during apply
+**/*.tmp
+
+# Generated local env overrides (written by scripts/update-env.sh)
+**/.env.local
+
 # macOS
 .DS_Store

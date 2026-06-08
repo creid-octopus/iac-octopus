@@ -51,3 +51,79 @@ variable "argocd_admin_password_hash" {
   type        = string
   sensitive   = true
 }
+
+variable "argocd_admin_password" {
+  description = "Plaintext ArgoCD admin password — used only by the local-exec token generation script, never stored in state"
+  type        = string
+  sensitive   = true
+}
+
+variable "argocd_web_ui_url" {
+  description = "Override the ArgoCD Web UI URL for Octopus registration. Leave empty to compute automatically from the LoadBalancer IP."
+  type        = string
+  default     = ""
+}
+
+variable "argocd_insecure" {
+  description = "Skip TLS verification on the gRPC connection from the gateway to ArgoCD (true for self-signed cert)"
+  type        = bool
+  default     = true
+}
+
+# ─── Octopus Deploy ────────────────────────────────────────────────────────
+
+variable "octopus_api_url" {
+  description = "Octopus Deploy HTTP API URL"
+  type        = string
+  default     = "https://demo.octopus.app"
+}
+
+variable "octopus_grpc_url" {
+  description = "Octopus Deploy gRPC URL including port. Octopus Cloud uses 8443 for gRPC (443 is the REST API)."
+  type        = string
+  default     = "demo.octopus.app:8443"
+}
+
+variable "octopus_grpc_plaintext" {
+  description = "Disable TLS on the Octopus gRPC connection — only for local/dev setups"
+  type        = bool
+  default     = false
+}
+
+variable "octopus_api_key" {
+  description = "Octopus Deploy API key used to register the gateway"
+  type        = string
+  sensitive   = true
+}
+
+variable "octopus_space_id" {
+  description = "Octopus Deploy Space ID the gateway registers into"
+  type        = string
+  default     = "Spaces-3705"
+}
+
+variable "octopus_environments" {
+  description = "Octopus Deploy environment names to associate with this gateway"
+  type        = list(string)
+  default     = ["Development", "Test", "Production"]
+}
+
+# ─── Gateway ───────────────────────────────────────────────────────────────
+
+variable "gateway_namespace" {
+  description = "Kubernetes namespace for the Octopus ArgoCD Gateway"
+  type        = string
+  default     = "octopus-argocd-gateway"
+}
+
+variable "gateway_name" {
+  description = "Name for this gateway as it appears in Octopus Deploy"
+  type        = string
+  default     = "argocd-demo"
+}
+
+variable "gateway_chart_version" {
+  description = "Helm chart version for the Octopus ArgoCD Gateway. Check: https://hub.docker.com/r/octopusdeploy/octopus-argocd-gateway-chart/tags"
+  type        = string
+  default     = "1.23.0"
+}

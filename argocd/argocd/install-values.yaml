@@ -17,3 +17,14 @@ configs:
     # Serve HTTPS with self-signed cert (default)
     # Set to "true" to disable TLS and serve plain HTTP instead
     server.insecure: false
+  cm:
+    # Dedicated account for Octopus Deploy — API key only, no interactive login
+    accounts.octopus: apiKey
+  rbac:
+    policy.default: "role:readonly"
+    policy.csv: |
+      g, admin, role:admin
+      p, octopus, applications, get, *, allow
+      p, octopus, applications, sync, *, allow
+      p, octopus, clusters, get, *, allow
+      p, octopus, logs, get, */*, allow
