@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    # Helm chart from the Grafana registry
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: grafana
+      targetRevision: "8.*"
+      helm:
+        valueFiles:
+          - $values/argocd/cluster-infra/grafana/values.yaml
+    # Values file from this repo
+    - repoURL: https://github.com/creid-octopus/iac-octopus
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
