@@ -28,27 +28,17 @@ The only inputs Terraform needs from outside are credentials (API keys, password
 
 ### What you need for local interaction
 
-After `terraform apply`, run these once to enable local kubectl, ArgoCD CLI, and Headlamp access:
+After `terraform apply`, run these three commands:
 
 ```bash
-# 1. Merge cluster credentials into local kubeconfig
-az aks get-credentials \
-  --resource-group rg-argocd-demo \
-  --name aks-argocd-demo \
-  --context argocd-demo
-
-# 2. Update ARGOCD_SERVER in .envrc with the new IP (changes on every recreation)
-terraform -chdir=argocd/terraform output argocd_server_ip
-# Then update ARGOCD_SERVER in argocd/.envrc and reload:
-direnv reload
-
-# 3. Bootstrap ArgoCD (connects it to the repo, applies the root Application)
-./argocd/scripts/bootstrap.sh
+./argocd/scripts/update-env.sh   # reads TF outputs, updates .env.local, merges kubeconfig
+direnv reload                     # loads ARGOCD_SERVER into shell
+./argocd/scripts/bootstrap.sh    # connects ArgoCD to the repo, applies root Application
 ```
 
-Headlamp picks up the `argocd-demo` context automatically after step 1.
+`update-env.sh` handles both the kubeconfig merge (`az aks get-credentials`) and capturing the current ArgoCD IP into `.env.local`. Headlamp picks up the `argocd-demo` context automatically.
 
-> **On recreation:** The ArgoCD external IP changes each time. Step 2 must be repeated after every `terraform apply` to keep `ARGOCD_SERVER` current.
+> **On recreation:** The ArgoCD external IP changes each time — re-run `update-env.sh` and `direnv reload` before running `bootstrap.sh`.
 
 ---
 
@@ -348,6 +338,10 @@ terraform destroy
 ```
 
 This removes (in dependency order): the gateway Helm release, the ArgoCD Helm release, the AKS cluster, and the resource group. Deleting the AKS cluster also deletes the managed node resource group (`MC_*`), which cleans up the ArgoCD LoadBalancer IP and any Azure Disks.
+
+### Known manual step — Octopus ArgoCD Instance
+
+The Octopus ArgoCD Instance (not the same as a deployment target machine) does not yet have a public API delete endpoint. The pre-destroy script will open the Octopus UI URL and pause — delete the `argocd-demo` instance from that page before pressing Enter to continue. This will be automatable once Octopus exposes the endpoint.
 
 ### Known teardown notes
 

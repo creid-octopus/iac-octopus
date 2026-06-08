@@ -23,8 +23,7 @@ if [ -z "$ARGOCD_SERVER" ]; then
   exit 1
 fi
 echo "    ArgoCD server: $ARGOCD_SERVER"
-OCTOPUS_URL="${OCTOPUS_URL:?Set OCTOPUS_URL (e.g. https://demo.octopus.app)}"
-OCTOPUS_API_KEY="${OCTOPUS_API_KEY:?Set OCTOPUS_API_KEY}"
+OCTOPUS_URL="${OCTOPUS_URL:-https://demo.octopus.app}"
 OCTOPUS_SPACE_ID="${OCTOPUS_SPACE_ID:-Spaces-3705}"
 GATEWAY_NAME="${GATEWAY_NAME:-argocd-demo}"
 KUBECTL_CONTEXT="${KUBECTL_CONTEXT:-argocd-demo}"
@@ -45,20 +44,15 @@ echo ">>> Waiting for child app resources to be removed (up to 2 min)..."
 # Brief wait for Kubernetes resources to be deleted before AKS teardown
 sleep 30
 
-echo ">>> Deregistering gateway '$GATEWAY_NAME' from Octopus ($OCTOPUS_URL)"
-MACHINE_ID=$(curl -sf \
-  -H "X-Octopus-ApiKey: $OCTOPUS_API_KEY" \
-  "$OCTOPUS_URL/api/$OCTOPUS_SPACE_ID/machines?name=$GATEWAY_NAME" \
-  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['Items'][0]['Id'] if d['Items'] else '')" 2>/dev/null || echo "")
-
-if [ -n "$MACHINE_ID" ]; then
-  curl -sf -X DELETE \
-    -H "X-Octopus-ApiKey: $OCTOPUS_API_KEY" \
-    "$OCTOPUS_URL/api/$OCTOPUS_SPACE_ID/machines/$MACHINE_ID" > /dev/null
-  echo "    Removed deployment target $MACHINE_ID ($GATEWAY_NAME)"
-else
-  echo "    Gateway '$GATEWAY_NAME' not found in Octopus — skipping"
-fi
+echo ""
+echo "⚠  Manual step required — Octopus ArgoCD instance removal"
+echo "   The Octopus ArgoCD Instance API does not yet expose a public delete endpoint."
+echo "   Before continuing, remove '$GATEWAY_NAME' manually:"
+echo ""
+echo "   $OCTOPUS_URL/app#/$OCTOPUS_SPACE_ID/infrastructure/argocdinstances"
+echo ""
+echo "   Delete the '$GATEWAY_NAME' instance from that page, then press Enter to continue."
+read -r
 
 echo ">>> Removing argocd-demo context from local kubeconfig"
 kubectl config delete-context "$KUBECTL_CONTEXT" 2>/dev/null || true
