@@ -1,0 +1,19 @@
+# Terraform
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfvars
+!**/*.tfvars.example
+# Keep the lock file - ensures consistent provider versions across machines
+# **/.terraform.lock.hcl
+
+# Kubeconfig / credentials
+*.kubeconfig
+kubeconfig
+
+# direnv - .envrc files often contain secrets; manage per-directory
+# (add per-directory .envrc to .gitignore if they contain real values)
+**/.envrc
+
+# macOS
+.DS_Store

@@ -1,0 +1,19 @@
+# ArgoCD Helm chart values — demo environment
+# Chart: argo/argo-cd (https://argoproj.github.io/argo-helm)
+#
+# Exposure: LoadBalancer with ArgoCD's default self-signed TLS
+# Access:   https://<external-ip>  (browser will warn about self-signed cert — click through)
+# CLI:      argocd login <external-ip> --insecure
+
+server:
+  service:
+    type: LoadBalancer
+
+  # Single replica — appropriate for demos, saves resources on B2s nodes
+  replicas: 1
+
+configs:
+  params:
+    # Serve HTTPS with self-signed cert (default)
+    # Set to "true" to disable TLS and serve plain HTTP instead
+    server.insecure: false
