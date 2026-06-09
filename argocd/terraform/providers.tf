@@ -26,6 +26,10 @@ terraform {
       source  = "hashicorp/local"
       version = "~> 2.0"
     }
+    octopusdeploy = {
+      source  = "OctopusDeploy/octopusdeploy"
+      version = "~> 1.0"
+    }
   }
 
   backend "azurerm" {
@@ -40,6 +44,12 @@ terraform {
 provider "azurerm" {
   features {}
   # Auth: Azure CLI (az login) — no credentials in code
+}
+
+provider "octopusdeploy" {
+  address  = var.octopus_api_url
+  api_key  = var.octopus_api_key
+  space_id = var.octopus_space_id
 }
 
 # Both helm and kubernetes providers are configured to connect directly

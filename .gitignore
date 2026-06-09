@@ -11,9 +11,10 @@
 *.kubeconfig
 kubeconfig
 
-# direnv - .envrc files often contain secrets; manage per-directory
-# (add per-directory .envrc to .gitignore if they contain real values)
+# direnv - .envrc files contain secrets and are gitignored
+# Copy .envrc.example to .envrc and fill in your values
 **/.envrc
+!**/.envrc.example
 
 # Terraform temporary files written during apply
 **/*.tmp

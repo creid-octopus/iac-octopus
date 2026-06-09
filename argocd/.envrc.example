@@ -1,0 +1,27 @@
+# Copy to .envrc and fill in your values, then run: direnv allow
+#
+# .envrc is gitignored — never commit real credentials.
+# direnv sources this automatically when you cd into the directory.
+#
+# How this works with Terraform:
+#   Variables prefixed with TF_VAR_ are automatically picked up by Terraform
+#   as input variables. This keeps secrets out of terraform.tfvars (which you
+#   might accidentally commit) and out of shell history.
+
+# ── Dynamic values (written by scripts/update-env.sh after terraform apply) ──
+# Source .env.local so ARGOCD_SERVER updates automatically after each apply.
+source_env_if_exists .env.local
+
+# ── ArgoCD ────────────────────────────────────────────────────────────────────
+# Plaintext admin password — used by bootstrap.sh and pre-destroy.sh.
+# Must match the bcrypt hash in terraform.tfvars (argocd_admin_password_hash).
+export ARGOCD_PASSWORD="your-argocd-password"
+
+# ── Octopus Deploy ────────────────────────────────────────────────────────────
+export OCTOPUS_API_KEY="API-YOUR-KEY-HERE"   # Infrastructure → API Keys in Octopus
+
+# ── Terraform variables ───────────────────────────────────────────────────────
+# TF_VAR_* values are consumed by Terraform automatically as input variables.
+# Keep secrets here rather than in terraform.tfvars.
+export TF_VAR_argocd_admin_password="your-argocd-password"   # same value as ARGOCD_PASSWORD above
+export TF_VAR_octopus_api_key="API-YOUR-KEY-HERE"             # same value as OCTOPUS_API_KEY above

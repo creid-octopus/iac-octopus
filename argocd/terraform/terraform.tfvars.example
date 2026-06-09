@@ -34,3 +34,13 @@ octopus_environments = ["Development", "Test", "Production"]
 # ─── Gateway ─────────────────────────────────────────────────────────────────
 gateway_name          = "argocd-demo"
 gateway_chart_version = "1.23.0"  # check https://hub.docker.com/r/octopusdeploy/octopus-argocd-gateway-chart/tags
+
+# ─── Kubernetes Agent ─────────────────────────────────────────────────────────
+# Space name is needed separately — the Helm chart takes the name, not the ID.
+octopus_space_name = "CReid - Sandbox"
+
+# Other agent defaults are fine from variables.tf — override only if needed:
+# kubernetes_agent_name          = "aks-argocd-demo"
+# kubernetes_agent_namespace     = "octopus-k8s-agent"
+# kubernetes_agent_roles         = ["k8s-agent"]
+# kubernetes_agent_chart_version = "3.*.*"  # check https://hub.docker.com/r/octopusdeploy/kubernetes-agent/tags
