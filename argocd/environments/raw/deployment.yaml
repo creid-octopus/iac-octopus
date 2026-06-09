@@ -19,7 +19,7 @@ spec:
         version: v2.0
     spec:
       containers:
-        - name: demo-app-raw
+        - name: demo-app
           image: docker.io/kostiscodefresh/gitops-simple-app:v2.0
           ports:
             - containerPort: 8080
