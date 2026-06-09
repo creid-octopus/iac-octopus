@@ -9,8 +9,158 @@ GitOps demo environment: AKS cluster with ArgoCD, Octopus Deploy integration, an
 | 1 | AKS cluster via Terraform | ✅ Complete |
 | 2 | ArgoCD installation and exposure | ✅ Complete |
 | 3 | Cluster infrastructure via GitOps | ✅ Complete |
-| 4 | Octopus Deploy integration | ✅ Complete |
-| 5 | Demo applications | 🔄 In Progress |
+| 4 | Octopus Deploy integration (ArgoCD gateway) | ✅ Complete |
+| 4b | Octopus Kubernetes agent deployment target | 🔄 In Progress |
+| 5 | Demo applications | ⏳ Pending |
+
+---
+
+## Quickstart — New User Setup
+
+Everything needed to go from zero to a running environment. The per-phase sections below have deeper detail; this covers the happy path.
+
+### Prerequisites
+
+| Tool | Install | Notes |
+|------|---------|-------|
+| Azure CLI | `brew install azure-cli` | Run `az login` after |
+| Terraform ≥ 1.5 | `brew install terraform` | |
+| ArgoCD CLI | `brew install argocd` | Needed for bootstrap |
+| netcat (`nc`) | Pre-installed on macOS | Used by token generation |
+| kubectl | Via Docker Desktop or `brew install kubectl` | |
+| direnv | `brew install direnv` | Required — manages secrets and shell env |
+
+After installing direnv, add the hook to your shell profile if you haven't already:
+
+```bash
+# zsh
+echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc && source ~/.zshrc
+```
+
+### Step 1 — Fork and update the repo URL
+
+ArgoCD pulls manifests from GitHub directly, so it needs to point at a repo you control. Fork `creid-octopus/iac-octopus`, clone your fork, then update the repoURL in the root Application:
+
+```bash
+# argocd/argocd/apps/root-app.yaml — change this line:
+repoURL: https://github.com/YOUR-ORG/YOUR-FORK
+```
+
+Do the same for any Application manifest that references `creid-octopus/iac-octopus` if you want to manage your own copy of the config. If you're just running the demo read-only, you can leave it pointing at the original repo.
+
+### Step 2 — Configure the Terraform backend
+
+Edit `argocd/terraform/providers.tf` and fill in your Azure storage account for Terraform state:
+
+```hcl
+backend "azurerm" {
+  resource_group_name  = "your-tf-state-rg"
+  storage_account_name = "yourstorageaccount"
+  container_name       = "your-container"
+  key                  = "argocd-demo.tfstate"
+}
+```
+
+### Step 3 — Set up credentials with direnv
+
+Secrets live in `.envrc`, not in `terraform.tfvars`. Variables prefixed `TF_VAR_` are picked up by Terraform automatically, keeping credentials out of any file you might accidentally commit.
+
+```bash
+cp argocd/.envrc.example argocd/.envrc
+# Edit argocd/.envrc with your values
+direnv allow argocd/
+```
+
+The values you need to fill in:
+
+```bash
+export ARGOCD_PASSWORD="your-argocd-password"          # pick anything — sets the ArgoCD admin password
+export OCTOPUS_API_KEY="API-YOUR-KEY-HERE"             # Infrastructure → API Keys in your Octopus space
+
+export TF_VAR_argocd_admin_password="your-argocd-password"   # same value as ARGOCD_PASSWORD
+export TF_VAR_octopus_api_key="API-YOUR-KEY-HERE"             # same value as OCTOPUS_API_KEY
+```
+
+### Step 4 — Create terraform.tfvars
+
+```bash
+cp argocd/terraform/terraform.tfvars.example argocd/terraform/terraform.tfvars
+```
+
+`tfvars` holds configuration (not secrets — those are in `.envrc`). The only values you must fill in:
+
+```hcl
+# bcrypt hash of your ArgoCD password — generate with:
+# python3 -c "import bcrypt; print(bcrypt.hashpw(b'yourpassword', bcrypt.gensalt(10)).decode())"
+argocd_admin_password_hash = "$2a$10$..."
+
+# Your Octopus space name — must match exactly as it appears in the UI
+octopus_space_name = "Your Space Name"
+
+# Override these if you're not using demo.octopus.app / Spaces-3705:
+# octopus_api_url      = "https://yourinstance.octopus.app"
+# octopus_grpc_url     = "yourinstance.octopus.app:8443"
+# octopus_space_id     = "Spaces-XXXX"
+# octopus_environments = ["Development", "Test", "Production"]
+```
+
+### Step 5 — Apply
+
+```bash
+cd argocd/terraform
+terraform init    # downloads all providers
+terraform plan    # review what will be created
+terraform apply   # ~10 min: AKS + ArgoCD + Octopus gateway + K8s agent
+```
+
+`terraform apply` is fully self-contained — no pre-configured kubectl context or `az aks get-credentials` required.
+
+### Step 6 — Configure local tools
+
+```bash
+cd ..   # back to argocd/ directory so direnv picks up .envrc
+./scripts/update-env.sh   # reads TF outputs → writes .env.local + merges kubeconfig
+direnv reload              # picks up ARGOCD_SERVER from the freshly written .env.local
+```
+
+### Step 7 — Bootstrap ArgoCD
+
+```bash
+./scripts/bootstrap.sh    # connects ArgoCD to the repo, applies root Application
+```
+
+ArgoCD will sync `cluster-infra` and deploy all child apps (Grafana + demo apps). Watch progress:
+
+```bash
+argocd app list
+```
+
+### What you'll have
+
+- AKS cluster in `centralus` (Standard_B2s, autoscaler min 1 / max 2)
+- ArgoCD at `https://<external-ip>` (self-signed cert — click through the browser warning)
+- Grafana in `monitoring` namespace (`kubectl port-forward svc/grafana 3000:80 -n monitoring`)
+- Octopus ArgoCD Gateway connected to your space
+- Octopus Kubernetes Agent registered as a deployment target (`aks-argocd-demo`)
+- Demo applications: kustomize (dev + staging), helm, and raw YAML
+
+### Gotchas
+
+**ArgoCD self-signed cert** — Browsers will warn; click through. All CLI commands use `--insecure`.
+
+**ArgoCD IP changes on every recreation** — After each fresh `terraform apply`, re-run `update-env.sh` and `direnv reload` before `bootstrap.sh`. The new IP lands in `.env.local` automatically.
+
+**Octopus ArgoCD Instance requires manual deletion** — The gateway registers an "ArgoCD Instance" in Octopus that has no public delete API yet. `pre-destroy.sh` pauses and shows the URL — delete it from the UI before pressing Enter. The Kubernetes agent target, by contrast, is fully managed by Terraform.
+
+**Octopus gRPC port is 8443, not 443** — 443 is the REST API and returns a JSON 401 to gRPC clients. The defaults in `variables.tf` are correct; only relevant if you override `octopus_grpc_url`.
+
+### Teardown
+
+```bash
+# From argocd/ — ARGOCD_PASSWORD is already in env via direnv
+./scripts/pre-destroy.sh                          # removes ArgoCD apps; pauses for manual Octopus step
+cd terraform && terraform destroy                  # removes everything; auto-deletes K8s agent target
+```
 
 ---
 
@@ -272,16 +422,17 @@ Also updates the ArgoCD Helm release to add a dedicated `octopus` service accoun
 
 ### Setup
 
-**1. Add Phase 4 values to `terraform.tfvars`**
+**1. Add Phase 4 values**
 
-```hcl
-argocd_admin_password = "your-plaintext-password"
-argocd_web_ui_url     = "https://YOUR_EXTERNAL_IP"
-argocd_insecure       = true
-octopus_api_key       = "API-YOUR-KEY-HERE"
+Secrets go in `.envrc` (via `TF_VAR_*`), not in `terraform.tfvars`:
+
+```bash
+# argocd/.envrc — add these if not already present
+export TF_VAR_argocd_admin_password="your-plaintext-password"
+export TF_VAR_octopus_api_key="API-YOUR-KEY-HERE"
 ```
 
-The other Phase 4 variables have correct defaults in `variables.tf` — only override if needed.
+`argocd_web_ui_url` does not need to be set — it is computed automatically from the LoadBalancer IP during apply. All other Phase 4 variables have correct defaults in `variables.tf`.
 
 **2. Re-init and apply**
 
@@ -315,6 +466,66 @@ Octopus Cloud exposes two endpoints on different ports — **8443 for gRPC** (us
 ### ArgoCD CLI context note
 
 The `argocd` CLI persists server contexts in `~/.config/argocd/config`. If `bootstrap.sh` was previously run with the external IP, that context remains as the active one. The token generation script explicitly passes `--server localhost:18080` and calls `argocd context localhost:18080` to avoid silently falling back to a stale external IP context.
+
+---
+
+## Phase 4b — Kubernetes Agent Deployment Target
+
+### What this does
+
+Installs the **Octopus Kubernetes Agent** (polling Tentacle) alongside the ArgoCD gateway. Where the gateway provides GitOps sync visibility, the Kubernetes agent enables Octopus to execute Kubernetes deployment steps directly on the cluster.
+
+Unlike the ArgoCD gateway instance (which has no public delete API), the Kubernetes agent deployment target is **fully managed by Terraform** — `terraform destroy` removes it from Octopus automatically. No manual step required.
+
+**How the automated registration works** (no wizard bearer token needed):
+
+1. Terraform generates a tentacle certificate and polling subscription URI locally via the `octopusdeploy` provider
+2. A deployment target is pre-registered in Octopus with the cert thumbprint and subscription URI
+3. The Helm chart installs the agent with the same cert and URI
+4. The agent connects to Octopus, which matches it to the pre-existing target
+
+**Decisions baked in:**
+- Agent chart: `oci://registry-1.docker.io/octopusdeploy/kubernetes-agent` `3.*.*`
+- Namespace: `octopus-k8s-agent`
+- Target name: `aks-argocd-demo`
+- Target tags: `k8s-agent`
+- Polling address: derived from `octopus_api_url` (`https://polling.demo.octopus.app`)
+
+### Prerequisites
+
+- Phase 4 complete (Octopus API key already configured in `terraform.tfvars`)
+- `octopus_space_name` added to `terraform.tfvars` (the chart uses the name, not the space ID)
+
+### Setup
+
+**1. Add to `terraform.tfvars`**
+
+```hcl
+octopus_space_name = "Your Space Name"   # e.g. "CReid - Sandbox"
+```
+
+**2. Re-init and apply** (new provider requires init)
+
+```bash
+cd argocd/terraform
+terraform init   # picks up OctopusDeployLabs/octopusdeploy provider
+terraform plan
+terraform apply
+```
+
+### Verifying the connection
+
+```bash
+# Watch agent logs — should show successful registration with Octopus
+terraform output get_k8s_agent_logs
+# (run the printed kubectl command)
+```
+
+In Octopus Deploy → Infrastructure → Deployment Targets, `aks-argocd-demo` should appear as a healthy Kubernetes agent target.
+
+### Teardown note
+
+`terraform destroy` removes the Octopus deployment target automatically via the provider. No manual step needed — this is the key difference from the ArgoCD gateway instance.
 
 ---
 
@@ -358,17 +569,15 @@ The Octopus ArgoCD Instance (not the same as a deployment target machine) does n
 ### Recreating after teardown
 
 ```bash
-cd argocd/terraform
-terraform apply
+cd argocd/terraform && terraform apply
 
-# Reconfigure kubectl and Headlamp
-az aks get-credentials --resource-group rg-argocd-demo --name aks-argocd-demo --context argocd-demo
-
-# Bootstrap ArgoCD (note: the external IP will be different after recreation)
-ARGOCD_SERVER=<new-ip> ARGOCD_PASSWORD=<password> ./scripts/bootstrap.sh
+cd ..   # back to argocd/ so direnv is active
+./scripts/update-env.sh   # writes new IP to .env.local + merges kubeconfig
+direnv reload              # loads updated ARGOCD_SERVER
+./scripts/bootstrap.sh    # re-bootstraps ArgoCD against the new cluster
 ```
 
-> The ArgoCD external IP changes on every recreation. Update `ARGOCD_SERVER` in your `.envrc` after each recreate.
+`update-env.sh` reads the new LoadBalancer IP directly from Terraform outputs — no manual IP lookup needed.
 
 ---
 

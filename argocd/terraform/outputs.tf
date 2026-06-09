@@ -38,3 +38,13 @@ output "get_gateway_logs" {
   description = "Tail gateway logs to verify Octopus connection"
   value       = "kubectl logs -l app.kubernetes.io/name=octopus-argocd-gateway -n octopus-argocd-gateway --context argocd-demo -f"
 }
+
+output "k8s_agent_target_id" {
+  description = "Octopus deployment target ID for the Kubernetes agent"
+  value       = octopusdeploy_kubernetes_agent_deployment_target.k8s_agent.id
+}
+
+output "get_k8s_agent_logs" {
+  description = "Tail Kubernetes agent logs to verify Octopus connection"
+  value       = "kubectl logs -l app.kubernetes.io/name=kubernetes-agent -n ${var.kubernetes_agent_namespace} --context argocd-demo -f"
+}

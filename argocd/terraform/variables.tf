@@ -127,3 +127,37 @@ variable "gateway_chart_version" {
   type        = string
   default     = "1.23.0"
 }
+
+# ─── Octopus space name ─────────────────────────────────────────────────────
+# The Helm chart uses the space name (not ID) when registering the agent.
+variable "octopus_space_name" {
+  description = "Octopus Deploy Space name — used by the Kubernetes agent Helm chart (chart takes name, not ID)"
+  type        = string
+  default     = "CReid - Sandbox"
+}
+
+# ─── Kubernetes Agent ───────────────────────────────────────────────────────
+
+variable "kubernetes_agent_name" {
+  description = "Name for the Kubernetes agent deployment target in Octopus. Also used as the Helm release name — must be unique per cluster."
+  type        = string
+  default     = "aks-argocd-demo"
+}
+
+variable "kubernetes_agent_namespace" {
+  description = "Kubernetes namespace to install the agent into"
+  type        = string
+  default     = "octopus-k8s-agent"
+}
+
+variable "kubernetes_agent_roles" {
+  description = "Target tags (roles) to assign to the Kubernetes agent deployment target"
+  type        = list(string)
+  default     = ["k8s-agent"]
+}
+
+variable "kubernetes_agent_chart_version" {
+  description = "Helm chart major version constraint for the Kubernetes agent. Specify the major version to prevent breaking changes. Check: https://hub.docker.com/r/octopusdeploy/kubernetes-agent/tags"
+  type        = string
+  default     = "3.*.*"
+}
