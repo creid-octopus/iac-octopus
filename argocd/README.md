@@ -139,7 +139,7 @@ argocd app list
 
 - AKS cluster in `centralus` (Standard_B2s, autoscaler min 1 / max 2)
 - ArgoCD at `https://<external-ip>` (self-signed cert — click through the browser warning)
-- Grafana in `monitoring` namespace (`kubectl port-forward svc/grafana 3000:80 -n monitoring`)
+- Grafana in `monitoring` namespace (`kubectl port-forward svc/kube-prometheus-grafana 3000:80 -n monitoring`)
 - Octopus ArgoCD Gateway connected to your space
 - Octopus Kubernetes Agent registered as a deployment target (`aks-argocd-demo`)
 - Demo applications: kustomize (dev + staging), helm, and raw YAML
@@ -339,9 +339,11 @@ Bootstraps the App of Apps pattern: a single root Application (`cluster-infra`) 
 
 **Decisions baked in:**
 - Root app: `cluster-infra` Application pointing at `argocd/argocd/apps/cluster-infra/`
-- Grafana: Helm chart from `grafana/grafana`, values from `argocd/cluster-infra/grafana/values.yaml`
-- Grafana service: ClusterIP (port-forward to access) — change to LoadBalancer in `values.yaml` for persistent access
-- No persistence on Grafana — keeps teardown clean
+- **kube-prometheus-stack**: Prometheus + Grafana + kube-state-metrics + node-exporter in one chart, pre-wired together
+- Grafana service: ClusterIP (port-forward to access) — change `service.type` to `LoadBalancer` in `cluster-infra/kube-prometheus/values.yaml` for persistent external access
+- No persistence on Prometheus or Grafana — keeps teardown clean; metrics history is lost on pod restart
+- AlertManager disabled — no alerting config needed for a demo environment
+- AKS control plane scrapers disabled (kubeScheduler, kubeControllerManager, kubeEtcd, kubeProxy) — AKS doesn't expose these endpoints
 
 ### Prerequisites
 
@@ -379,11 +381,13 @@ The `cluster-infra` app will appear first, then Grafana will be created as a chi
 Grafana runs as ClusterIP — use port-forward to access it:
 
 ```bash
-kubectl port-forward svc/grafana 3000:80 -n monitoring --context argocd-demo
+kubectl port-forward svc/kube-prometheus-grafana 3000:80 -n monitoring --context argocd-demo
 # then open http://localhost:3000 — login with admin/admin
 ```
 
-Or switch `service.type` to `LoadBalancer` in `cluster-infra/grafana/values.yaml` and push — ArgoCD will update the service automatically.
+Kubernetes cluster dashboards (nodes, pods, namespaces, resource usage) are pre-installed by the chart. No data source configuration required — Prometheus is already wired in.
+
+To expose Grafana externally, change `grafana.service.type` to `LoadBalancer` in `cluster-infra/kube-prometheus/values.yaml` and push — ArgoCD will update the service automatically.
 
 ### When the repo goes private
 
@@ -585,9 +589,27 @@ direnv reload              # loads updated ARGOCD_SERVER
 
 ```
 argocd/
-├── terraform/          ← Phase 1: AKS infrastructure
-├── argocd/             ← Phase 2+: ArgoCD Helm values and Application manifests
-├── cluster-infra/      ← Phase 3: Helm values for cluster tools
-├── environments/       ← Phase 5: Demo app environment-per-folder structure
-└── scripts/            ← Bootstrap and teardown helpers
+├── terraform/                  ← AKS infrastructure + Octopus integrations
+├── argocd/
+│   ├── install-values.yaml     ← ArgoCD Helm values (Octopus account, RBAC)
+│   └── apps/
+│       ├── root-app.yaml       ← Root Application (App of Apps entry point)
+│       └── cluster-infra/      ← Child Application manifests (one file = one app)
+│           ├── kube-prometheus.yaml
+│           ├── demo-kustomize-dev.yaml
+│           ├── demo-kustomize-staging.yaml
+│           ├── demo-helm.yaml
+│           └── demo-raw.yaml
+├── cluster-infra/
+│   └── kube-prometheus/        ← Helm values for kube-prometheus-stack
+│       └── values.yaml
+├── environments/               ← Demo app configs (one subdirectory per approach)
+│   ├── kustomize/
+│   │   ├── base/
+│   │   └── overlays/
+│   │       ├── dev/
+│   │       └── staging/
+│   ├── helm/                   ← Chart + values.yaml
+│   └── raw/                    ← Plain Kubernetes manifests
+└── scripts/                    ← Bootstrap, teardown, and env helpers
 ```
