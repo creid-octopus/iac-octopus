@@ -1,18 +1,18 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: grafana
+  name: kube-prometheus
   namespace: argocd
 spec:
   project: default
   sources:
-    # Helm chart from the Grafana registry
-    - repoURL: https://grafana.github.io/helm-charts
-      chart: grafana
-      targetRevision: "8.*"
+    # kube-prometheus-stack chart from the prometheus-community registry
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: "70.*"
       helm:
         valueFiles:
-          - $values/argocd/cluster-infra/grafana/values.yaml
+          - $values/argocd/cluster-infra/kube-prometheus/values.yaml
     # Values file from this repo
     - repoURL: https://github.com/creid-octopus/iac-octopus
       targetRevision: HEAD
@@ -26,3 +26,5 @@ spec:
       prune: true
     syncOptions:
       - CreateNamespace=true
+      # Required for kube-prometheus-stack CRDs (ServerSideApply avoids annotation size limits)
+      - ServerSideApply=true

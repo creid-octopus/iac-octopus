@@ -1,0 +1,85 @@
+# kube-prometheus-stack values for AKS demo environment
+# Tuned for Standard_B2s nodes (2 vCPU, 4 GB) — keeps resource footprint lean
+# while retaining full cluster visibility.
+
+# ── AKS-specific: disable scrapers for control plane components ───────────────
+# AKS doesn't expose kube-scheduler, controller-manager, etcd, or kube-proxy
+# endpoints. Leaving these enabled causes harmless but noisy scrape errors.
+kubeScheduler:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+# ── Prometheus ─────────────────────────────────────────────────────────────────
+prometheus:
+  prometheusSpec:
+    # Short retention for a demo environment — no persistent storage
+    retention: 24h
+    storageSpec: {}   # in-memory only; data is lost on pod restart
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+# ── Grafana ────────────────────────────────────────────────────────────────────
+grafana:
+  adminPassword: admin   # demo environment — change for anything shared
+  service:
+    type: ClusterIP      # access via port-forward: kubectl port-forward svc/kube-prometheus-grafana 3000:80 -n monitoring
+  persistence:
+    enabled: false       # keeps teardown clean
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  # Sidecar discovers and loads additional ConfigMap-based dashboards and datasources
+  sidecar:
+    dashboards:
+      enabled: true
+    datasources:
+      enabled: true
+
+# ── Alertmanager ───────────────────────────────────────────────────────────────
+# Disabled — no alerting config in this demo environment
+alertmanager:
+  enabled: false
+
+# ── Prometheus Operator ────────────────────────────────────────────────────────
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# ── kube-state-metrics ─────────────────────────────────────────────────────────
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# ── node-exporter ──────────────────────────────────────────────────────────────
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
