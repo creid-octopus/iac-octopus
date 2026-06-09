@@ -1,0 +1,48 @@
+# ── PostSync hook — (runs after all Sync-phase resources are healthy) ─────────
+#
+# Simulates a post-deployment smoke test. ArgoCD runs this after the Deployment
+# is healthy. If the smoke test fails, the sync is marked as failed — useful for
+# catching broken deploys before they're considered successful.
+#
+# Key annotations:
+#   argocd.argoproj.io/hook: PostSync               — runs after Sync phase
+#   argocd.argoproj.io/hook-delete-policy: HookSucceeded — auto-clean after success
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: smoke-test
+  namespace: demo-sync-waves
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  ttlSecondsAfterFinished: 120
+  template:
+    metadata:
+      labels:
+        app: demo-sync-waves
+        phase: post-sync
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: smoke-test
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "==> [PostSync] Running smoke test against demo-app service..."
+              # Use the in-cluster DNS name. The service must be Ready before this Job starts.
+              if wget -qO- http://demo-app.demo-sync-waves.svc.cluster.local/; then
+                echo "==> [PostSync] Smoke test passed."
+              else
+                echo "==> [PostSync] Smoke test FAILED — deployment marked unhealthy." >&2
+                exit 1
+              fi
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi

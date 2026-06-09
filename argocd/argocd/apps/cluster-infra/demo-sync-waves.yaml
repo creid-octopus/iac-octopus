@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-sync-waves
+  namespace: argocd
+  annotations:
+    # Octopus Deploy: gateway surfaces this Application under the demo-sync-waves project
+    octopus.com/project: demo-sync-waves
+    octopus.com/environment: Development
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/creid-octopus/iac-octopus
+    targetRevision: HEAD
+    path: argocd/environments/sync-waves
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-sync-waves
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true

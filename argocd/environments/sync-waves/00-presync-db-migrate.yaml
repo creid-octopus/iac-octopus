@@ -1,0 +1,44 @@
+# ── PreSync hook — Wave -1 (runs before any Sync-phase resources) ─────────────
+#
+# Simulates a database migration / pre-flight check that must complete before
+# the application is deployed. ArgoCD runs this Job first, waits for completion,
+# then proceeds to the Sync phase.
+#
+# Key annotations:
+#   argocd.argoproj.io/hook: PreSync          — runs in the PreSync phase
+#   argocd.argoproj.io/hook-delete-policy: HookSucceeded — auto-clean after success
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate
+  namespace: demo-sync-waves
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  ttlSecondsAfterFinished: 120
+  template:
+    metadata:
+      labels:
+        app: demo-sync-waves
+        phase: pre-sync
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: db-migrate
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "==> [PreSync] Running database migration..."
+              sleep 3
+              echo "==> [PreSync] Migration complete."
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi

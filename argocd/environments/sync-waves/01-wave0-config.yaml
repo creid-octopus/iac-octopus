@@ -1,0 +1,30 @@
+# ── Sync phase — Wave 0 (applied first within the Sync phase) ─────────────────
+#
+# Namespace and ConfigMap must exist before the application Deployment starts.
+# Wave 0 resources are applied and must be healthy before wave 1 begins.
+#
+# Note: The namespace is also created by ArgoCD's CreateNamespace=true syncOption,
+# but declaring it explicitly here makes wave ordering visible in the UI.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-sync-waves
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    demo: sync-waves
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: demo-sync-waves
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    app: demo-sync-waves
+    phase: sync-wave-0
+data:
+  APP_VERSION: "v2.0"
+  ENVIRONMENT: "demo"
+  FEATURE_FLAGS: "sync-waves-demo=true"

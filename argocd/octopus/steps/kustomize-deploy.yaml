@@ -1,0 +1,78 @@
+# Kustomize — Direct K8s Agent Deploy (dev overlay)
+#
+# Paste this content into an Octopus "Deploy Kubernetes YAML" step targeting
+# the aks-argocd-demo deployment target (role: k8s-agent).
+#
+# This is a self-contained kustomization that references the base via a remote
+# git URL. Octopus substitutes #{Image.Tag} then applies the result directly
+# to the cluster — bypassing the ArgoCD GitOps loop.
+#
+# For the GitOps approach (git-update) use promote.sh with approach=kustomize-dev.
+#
+# Variables required:
+#   Image.Tag  — Image tag to deploy (e.g. v3.0)
+#   GitHub.Repo  — e.g. github.com/creid-octopus/iac-octopus (for remote base)
+#
+# NOTE: The "Deploy Kubernetes YAML" step does not run kustomize build natively.
+# Instead, this step type supports inline YAML only. For Kustomize direct deploy,
+# use a "Run a Script" step and run kubectl apply -k with the overlay (or use
+# the pre-built output below as a fully expanded Deployment + Service):
+#
+# ── Option A: Script step (preferred for direct Kustomize deploy) ───────────────
+# kubectl kustomize argocd/environments/kustomize/overlays/dev \
+#   | sed "s|newTag:.*|newTag: #{Image.Tag}|" \
+#   | kubectl apply -f - --context argocd-demo
+#
+# ── Option B: Expanded YAML (paste as Deploy Kubernetes YAML) ──────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  namespace: demo-kustomize-dev
+  labels:
+    app: demo-app
+    env: dev
+    deploy-version: "#{Image.Tag}"
+    managed-by: octopus-direct
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-app
+      env: dev
+  template:
+    metadata:
+      labels:
+        app: demo-app
+        env: dev
+        version: "#{Image.Tag}"
+    spec:
+      containers:
+        - name: demo-app
+          image: docker.io/kostiscodefresh/gitops-simple-app:#{Image.Tag}
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app
+  namespace: demo-kustomize-dev
+  labels:
+    app: demo-app
+    env: dev
+spec:
+  selector:
+    app: demo-app
+    env: dev
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

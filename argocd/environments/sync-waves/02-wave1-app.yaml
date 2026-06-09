@@ -1,0 +1,59 @@
+# ── Sync phase — Wave 1 (applied after wave 0 is healthy) ────────────────────
+#
+# The application Deployment and Service. ArgoCD waits for wave 0 resources
+# (Namespace + ConfigMap) to be healthy before starting wave 1.
+#
+# This ordering prevents the Deployment from starting before its config exists.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  namespace: demo-sync-waves
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    app: demo-sync-waves
+    phase: sync-wave-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-sync-waves
+  template:
+    metadata:
+      labels:
+        app: demo-sync-waves
+        version: v2.0
+    spec:
+      containers:
+        - name: demo-app
+          image: docker.io/kostiscodefresh/gitops-simple-app:v2.0
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: app-config
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app
+  namespace: demo-sync-waves
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    app: demo-sync-waves
+spec:
+  selector:
+    app: demo-sync-waves
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

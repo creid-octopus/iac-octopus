@@ -1,0 +1,21 @@
+image:
+  repository: docker.io/kostiscodefresh/gitops-simple-app
+  # Tag is the primary value to update when promoting a new version.
+  # In an Octopus deployment process, this is what a "Deploy Kubernetes YAML"
+  # or Helm step would parameterize via a variable.
+  tag: v2.0
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  port: 80
+  targetPort: 8080
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 32Mi
+  limits:
+    cpu: 200m
+    memory: 64Mi

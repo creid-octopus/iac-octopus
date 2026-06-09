@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# All resources from base, deployed into the staging namespace
+namespace: demo-kustomize-staging
+resources:
+  - ../../base
+
+# Intentionally behind dev — shows environment drift before a promotion.
+# To promote from dev: update newTag to match dev's tag and push.
+images:
+  - name: docker.io/kostiscodefresh/gitops-simple-app
+    newTag: v1.0
+
+# Label all resources so you can tell which environment they came from
+commonLabels:
+  env: staging

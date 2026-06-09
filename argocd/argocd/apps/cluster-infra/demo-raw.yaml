@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-raw
+  namespace: argocd
+  annotations:
+    # Octopus ArgoCD gateway — maps this Application to a project/environment
+    octopus.com/project: demo-app-raw
+    octopus.com/environment: Development
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/creid-octopus/iac-octopus
+    targetRevision: HEAD
+    # Plain directory — ArgoCD applies all YAML files found here
+    path: argocd/environments/raw
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-raw
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true

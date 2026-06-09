@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-helm
+  namespace: argocd
+  annotations:
+    # Octopus ArgoCD gateway — maps this Application to a project/environment
+    octopus.com/project: demo-app-helm
+    octopus.com/environment: Development
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/creid-octopus/iac-octopus
+    targetRevision: HEAD
+    # ArgoCD auto-detects Helm when Chart.yaml is present in the path
+    path: argocd/environments/helm
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-helm
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true

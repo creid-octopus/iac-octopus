@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# All resources from base, deployed into the dev namespace
+namespace: demo-kustomize-dev
+resources:
+  - ../../base
+
+# Pin the image tag for this environment.
+# To promote: copy this tag to staging/kustomization.yaml and push.
+images:
+  - name: docker.io/kostiscodefresh/gitops-simple-app
+    newTag: v2.0
+
+# Label all resources so you can tell which environment they came from
+commonLabels:
+  env: dev

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: demo-app
+description: >
+  Demo application chart for the ArgoCD training environment.
+  Wraps kostiscodefresh/gitops-simple-app to demonstrate the Helm
+  configuration approach — chart lives in git, image tag is the
+  only value that changes between deployments.
+type: application
+version: 0.1.0
+appVersion: "v2.0"

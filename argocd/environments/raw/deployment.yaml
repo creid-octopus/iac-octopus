@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  namespace: demo-raw
+  labels:
+    app: demo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+        # Update this label and the image tag together when deploying a new version.
+        # It gives ArgoCD (and Octopus) something to diff beyond the image digest.
+        version: v2.0
+    spec:
+      containers:
+        - name: demo-app
+          image: docker.io/kostiscodefresh/gitops-simple-app:v2.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi
