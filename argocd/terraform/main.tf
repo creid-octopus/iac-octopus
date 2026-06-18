@@ -11,9 +11,10 @@ resource "azurerm_resource_group" "main" {
   location = var.location
 
   tags = {
-    environment = var.environment
-    project     = "argocd-demo"
-    managed_by  = "terraform"
+    environment  = local.env
+    cluster_name = local.cluster_name
+    project      = "argocd-demo"
+    managed_by   = "terraform"
   }
 }
 
