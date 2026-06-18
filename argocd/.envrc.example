@@ -31,6 +31,11 @@ export TF_VAR_octopus_api_key="API-YOUR-KEY-HERE"             # same value as OC
 # Change this value when switching between environments (development → test → production).
 export TF_VAR_environment="development"
 
+# ── Terraform backend key ─────────────────────────────────────────────────────
+# providers.tf uses #{Octopus.Environment.Name | ToLower} for the state key,
+# which Octopus substitutes before running terraform init.
+# Local runs will fail with an unparseable backend config until substituted manually.
+
 # ── GitHub (for Octopus git-update deployments) ───────────────────────────────
 # GitHub credentials for the Octopus "Commit to Git" step are managed as
 # Library → Git Credentials in the Octopus UI — no env var needed here.

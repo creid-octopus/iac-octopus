@@ -36,11 +36,10 @@ terraform {
     resource_group_name  = "terraform-state"
     storage_account_name = "octotfstate"
     container_name       = "terraform-state"
-    key                  = "creid-argocd-demo.tfstate"
-    # All resources are environment-suffixed in their names, so environments
-    # can be applied sequentially against this shared state without collisions.
-    # If you ever need dev + prod to coexist simultaneously, switch to separate
-    # state keys or Terraform workspaces — but that's overkill for a demo.
+    # Octopus substitutes #{...} in files before running terraform init,
+    # so this hydrates to e.g. "creid-argocd-demo-development.tfstate" at runtime.
+    # Local runs will fail until this is replaced manually or via TF_CLI_ARGS_init.
+    key = "creid-argocd-demo-#{Octopus.Environment.Name | ToLower}.tfstate"
   }
 }
 
