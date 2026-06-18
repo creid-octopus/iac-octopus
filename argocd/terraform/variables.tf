@@ -112,13 +112,13 @@ variable "octopus_environments" {
 variable "gateway_namespace" {
   description = "Kubernetes namespace for the Octopus ArgoCD Gateway"
   type        = string
-  default     = "octopus-argocd-gateway-#{Octopus.Environment.Name | ToLower}"
+  default     = "octopus-argocd-gateway"
 }
 
 variable "gateway_name" {
   description = "Base name for the ArgoCD gateway as it appears in Octopus Deploy. The environment is appended automatically: argocd-demo-development."
   type        = string
-  default     = "argocd-demo-#{Octopus.Environment.Name | ToLower}"
+  default     = "argocd-demo"
 }
 
 variable "gateway_chart_version" {
