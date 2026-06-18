@@ -29,9 +29,9 @@ variable "node_size" {
 }
 
 variable "node_min_count" {
-  description = "Minimum node count for autoscaler"
+  description = "Minimum node count for autoscaler. Set to 2 for demo clusters — a single Standard_B2s can't fit ArgoCD + kube-prometheus-stack + Octopus agents without CPU pressure."
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "node_max_count" {
