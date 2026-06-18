@@ -2,6 +2,8 @@ locals {
   # Internal gRPC address of the ArgoCD server — used by the gateway within the cluster
   argocd_grpc_url          = "${helm_release.argocd.name}-server.${kubernetes_namespace.argocd.metadata[0].name}.svc.cluster.local:443"
   argocd_token_secret_name = "argocd-gateway-token"
+  # Environment-suffixed gateway name registered in Octopus (e.g. argocd-demo-development)
+  gateway_name             = "${var.gateway_name}-${var.environment}"
 }
 
 resource "kubernetes_namespace" "gateway" {
@@ -137,7 +139,7 @@ resource "helm_release" "gateway" {
       }
       registration = {
         octopus = {
-          name                        = var.gateway_name
+          name                        = local.gateway_name
           serverApiUrl                = var.octopus_api_url
           spaceId                     = var.octopus_space_id
           environments                = var.octopus_environments

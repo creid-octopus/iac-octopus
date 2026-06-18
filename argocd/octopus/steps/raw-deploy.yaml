@@ -1,24 +1,35 @@
-# Raw YAML — Direct K8s Agent Deploy
+# Raw YAML — Direct K8s Agent Deploy (tenant-aware)
 #
-# Paste this content into an Octopus "Deploy Kubernetes YAML" step targeting
+# Paste into an Octopus "Deploy Kubernetes YAML" step targeting
 # the aks-argocd-demo deployment target (role: k8s-agent).
 #
-# Octopus substitutes #{Image.Tag} before applying. After apply, ArgoCD will
-# detect drift (the live state differs from git) — this is intentional: it
-# demonstrates the contrast between direct deploy and GitOps promotion.
+# Octopus resolves #{...} variables before applying. The Namespace resource
+# is included so this step is self-contained — no pre-existing namespace needed.
+# After apply, ArgoCD detects drift against git (intentional — shows contrast
+# between direct deploy and GitOps promotion).
 #
 # Variables required:
-#   Image.Tag  — Image tag to deploy (e.g. v3.0)
+#   Project.Kubernetes.Namespace  — set per tenant (e.g. apextime-dev)
+#   Image.Tag                     — image tag to deploy (e.g. v3.0)
 #
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: #{Project.Kubernetes.Namespace}
+  labels:
+    managed-by: octopus
+    tenant: "#{Octopus.Tenant.Alias}"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: demo-app
-  namespace: demo-raw
+  namespace: #{Project.Kubernetes.Namespace}
   labels:
     app: demo-app
     deploy-version: "#{Image.Tag}"
     managed-by: octopus-direct
+    tenant: "#{Octopus.Tenant.Alias}"
 spec:
   replicas: 1
   selector:
@@ -29,6 +40,7 @@ spec:
       labels:
         app: demo-app
         version: "#{Image.Tag}"
+        tenant: "#{Octopus.Tenant.Alias}"
     spec:
       containers:
         - name: demo-app
@@ -47,9 +59,10 @@ apiVersion: v1
 kind: Service
 metadata:
   name: demo-app
-  namespace: demo-raw
+  namespace: #{Project.Kubernetes.Namespace}
   labels:
     app: demo-app
+    tenant: "#{Octopus.Tenant.Alias}"
 spec:
   selector:
     app: demo-app

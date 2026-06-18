@@ -33,11 +33,14 @@ terraform {
   }
 
   backend "azurerm" {
-    # Fill in from the planning doc (Open Decisions — Terraform state details)
     resource_group_name  = "terraform-state"
     storage_account_name = "octotfstate"
     container_name       = "terraform-state"
     key                  = "creid-argocd-demo.tfstate"
+    # All resources are environment-suffixed in their names, so environments
+    # can be applied sequentially against this shared state without collisions.
+    # If you ever need dev + prod to coexist simultaneously, switch to separate
+    # state keys or Terraform workspaces — but that's overkill for a demo.
   }
 }
 

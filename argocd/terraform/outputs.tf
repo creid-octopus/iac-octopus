@@ -16,7 +16,7 @@ output "kube_config_raw" {
 
 output "get_credentials_command" {
   description = "Run this after apply to configure kubectl and Headlamp"
-  value       = "az aks get-credentials --resource-group ${azurerm_resource_group.main.name} --name ${azurerm_kubernetes_cluster.main.name} --context argocd-demo"
+  value       = "az aks get-credentials --resource-group ${azurerm_resource_group.main.name} --name ${azurerm_kubernetes_cluster.main.name} --context argocd-demo-${var.environment}"
 }
 
 output "argocd_server_ip" {
@@ -31,12 +31,12 @@ output "argocd_login_command" {
 
 output "get_gateway_token" {
   description = "Inspect the ArgoCD token the gateway is using"
-  value       = "kubectl get secret argocd-gateway-token -n octopus-argocd-gateway -o jsonpath='{.data.ARGOCD_AUTH_TOKEN}' --context argocd-demo | base64 --decode && echo"
+  value       = "kubectl get secret argocd-gateway-token -n octopus-argocd-gateway -o jsonpath='{.data.ARGOCD_AUTH_TOKEN}' --context argocd-demo-${var.environment} | base64 --decode && echo"
 }
 
 output "get_gateway_logs" {
   description = "Tail gateway logs to verify Octopus connection"
-  value       = "kubectl logs -l app.kubernetes.io/name=octopus-argocd-gateway -n octopus-argocd-gateway --context argocd-demo -f"
+  value       = "kubectl logs -l app.kubernetes.io/name=octopus-argocd-gateway -n octopus-argocd-gateway --context argocd-demo-${var.environment} -f"
 }
 
 output "k8s_agent_target_id" {
@@ -46,5 +46,5 @@ output "k8s_agent_target_id" {
 
 output "get_k8s_agent_logs" {
   description = "Tail Kubernetes agent logs to verify Octopus connection"
-  value       = "kubectl logs -l app.kubernetes.io/name=kubernetes-agent -n ${var.kubernetes_agent_namespace} --context argocd-demo -f"
+  value       = "kubectl logs -l app.kubernetes.io/name=kubernetes-agent -n ${var.kubernetes_agent_namespace} --context argocd-demo-${var.environment} -f"
 }

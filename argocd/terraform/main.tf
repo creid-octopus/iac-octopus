@@ -1,5 +1,13 @@
+locals {
+  # Environment-suffixed resource names — all resources include the environment
+  # so multiple environments (development, test, production) can coexist independently.
+  env            = var.environment
+  cluster_name   = "${var.cluster_name}-${local.env}"
+  resource_group = "${var.resource_group_name}-${local.env}"
+}
+
 resource "azurerm_resource_group" "main" {
-  name     = var.resource_group_name
+  name     = local.resource_group
   location = var.location
 
   tags = {
@@ -10,10 +18,10 @@ resource "azurerm_resource_group" "main" {
 }
 
 resource "azurerm_kubernetes_cluster" "main" {
-  name                = var.cluster_name
+  name                = local.cluster_name
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-  dns_prefix          = var.cluster_name
+  dns_prefix          = local.cluster_name
   kubernetes_version  = var.kubernetes_version
 
   default_node_pool {
