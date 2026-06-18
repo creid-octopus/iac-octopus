@@ -1,7 +1,7 @@
 variable "resource_group_name" {
   description = "Base name for the Azure resource group. The environment is appended automatically: rg-argocd-demo-development."
   type        = string
-  default     = "rg-argocd-demo-#{Octopus.Environment.Name | ToLower}"
+  default     = "rg-argocd-demo"
 }
 
 variable "location" {
@@ -13,7 +13,7 @@ variable "location" {
 variable "cluster_name" {
   description = "Base name for the AKS cluster. The environment is appended automatically: aks-argocd-demo-development."
   type        = string
-  default     = "aks-argocd-demo-#{Octopus.Environment.Name | ToLower}"
+  default     = "aks-argocd-demo"
 }
 
 variable "kubernetes_version" {
