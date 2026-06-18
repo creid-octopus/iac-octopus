@@ -140,7 +140,7 @@ variable "octopus_space_name" {
 variable "kubernetes_agent_name" {
   description = "Name for the Kubernetes agent deployment target in Octopus. Also used as the Helm release name — must be unique per cluster."
   type        = string
-  default     = "aks-argocd-demo-#{Octopus.Environment.Name | ToLower}"
+  default     = "aks-argocd-demo"
 }
 
 variable "kubernetes_agent_namespace" {
