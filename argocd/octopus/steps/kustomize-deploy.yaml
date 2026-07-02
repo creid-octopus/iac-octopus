@@ -1,51 +1,58 @@
-# Kustomize — Direct K8s Agent Deploy (dev overlay)
+# Kustomize — Direct K8s Agent Deploy (tenant-aware)
 #
-# Paste this content into an Octopus "Deploy Kubernetes YAML" step targeting
+# Paste into an Octopus "Deploy Kubernetes YAML" step targeting
 # the aks-argocd-demo deployment target (role: k8s-agent).
 #
-# This is a self-contained kustomization that references the base via a remote
-# git URL. Octopus substitutes #{Image.Tag} then applies the result directly
-# to the cluster — bypassing the ArgoCD GitOps loop.
-#
-# For the GitOps approach (git-update) use promote.sh with approach=kustomize-dev.
+# The Namespace resource is included so this step is self-contained.
+# Octopus resolves #{...} variables before applying.
 #
 # Variables required:
-#   Image.Tag  — Image tag to deploy (e.g. v3.0)
-#   GitHub.Repo  — e.g. github.com/creid-octopus/iac-octopus (for remote base)
+#   Project.Kubernetes.Namespace  — set per tenant (e.g. apextime-dev)
+#   Image.Tag                     — image tag to deploy (e.g. v3.0)
 #
-# NOTE: The "Deploy Kubernetes YAML" step does not run kustomize build natively.
-# Instead, this step type supports inline YAML only. For Kustomize direct deploy,
-# use a "Run a Script" step and run kubectl apply -k with the overlay (or use
-# the pre-built output below as a fully expanded Deployment + Service):
+# NOTE: "Deploy Kubernetes YAML" applies inline YAML — it does not run
+# kustomize build. Two options:
 #
-# ── Option A: Script step (preferred for direct Kustomize deploy) ───────────────
-# kubectl kustomize argocd/environments/kustomize/overlays/dev \
-#   | sed "s|newTag:.*|newTag: #{Image.Tag}|" \
-#   | kubectl apply -f - --context argocd-demo
+# ── Option A: Run a Script step (preferred for Kustomize direct deploy) ─────────
 #
-# ── Option B: Expanded YAML (paste as Deploy Kubernetes YAML) ──────────────────
+#   repo_path=$(get_octopusvariable "Octopus.Calamari.Git.RepositoryPath")
+#   kubectl kustomize "$repo_path/argocd/environments/kustomize/overlays/dev" \
+#     | sed "s|newTag:.*|newTag: #{Image.Tag}|" \
+#     | kubectl apply -f -
+#   kubectl create namespace #{Project.Kubernetes.Namespace} --dry-run=client -o yaml \
+#     | kubectl apply -f -
+#
+# ── Option B: Expanded YAML (below — paste as Deploy Kubernetes YAML) ───────────
+#
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: #{Project.Kubernetes.Namespace}
+  labels:
+    managed-by: octopus
+    tenant: "#{Octopus.Tenant.Alias}"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: demo-app
-  namespace: demo-kustomize-dev
+  namespace: #{Project.Kubernetes.Namespace}
   labels:
     app: demo-app
-    env: dev
     deploy-version: "#{Image.Tag}"
     managed-by: octopus-direct
+    tenant: "#{Octopus.Tenant.Alias}"
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: demo-app
-      env: dev
   template:
     metadata:
       labels:
         app: demo-app
-        env: dev
         version: "#{Image.Tag}"
+        tenant: "#{Octopus.Tenant.Alias}"
     spec:
       containers:
         - name: demo-app
@@ -64,14 +71,13 @@ apiVersion: v1
 kind: Service
 metadata:
   name: demo-app
-  namespace: demo-kustomize-dev
+  namespace: #{Project.Kubernetes.Namespace}
   labels:
     app: demo-app
-    env: dev
+    tenant: "#{Octopus.Tenant.Alias}"
 spec:
   selector:
     app: demo-app
-    env: dev
   ports:
     - name: http
       port: 80

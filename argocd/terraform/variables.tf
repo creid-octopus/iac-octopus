@@ -1,5 +1,5 @@
 variable "resource_group_name" {
-  description = "Name of the Azure resource group"
+  description = "Base name for the Azure resource group. The environment is appended automatically: rg-argocd-demo-development."
   type        = string
   default     = "rg-argocd-demo"
 }
@@ -11,7 +11,7 @@ variable "location" {
 }
 
 variable "cluster_name" {
-  description = "Name of the AKS cluster"
+  description = "Base name for the AKS cluster. The environment is appended automatically: aks-argocd-demo-development."
   type        = string
   default     = "aks-argocd-demo"
 }
@@ -41,9 +41,8 @@ variable "node_max_count" {
 }
 
 variable "environment" {
-  description = "Value for the 'environment' resource tag"
+  description = "Environment name — appended to all resource names and used as the Terraform state key suffix. Must match the Octopus environment name in lowercase (e.g. development, test, production). No default: must be set explicitly per run."
   type        = string
-  default     = "demo"
 }
 
 variable "argocd_admin_password_hash" {
@@ -105,7 +104,7 @@ variable "octopus_space_id" {
 variable "octopus_environments" {
   description = "Octopus Deploy environment names to associate with this gateway"
   type        = list(string)
-  default     = ["Development", "Test", "Production"]
+  default     = ["#{Octopus.Environment.Name}"]
 }
 
 # ─── Gateway ───────────────────────────────────────────────────────────────
@@ -117,7 +116,7 @@ variable "gateway_namespace" {
 }
 
 variable "gateway_name" {
-  description = "Name for this gateway as it appears in Octopus Deploy"
+  description = "Base name for the ArgoCD gateway as it appears in Octopus Deploy. The environment is appended automatically: argocd-demo-development."
   type        = string
   default     = "argocd-demo"
 }

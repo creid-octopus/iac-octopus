@@ -1,13 +1,24 @@
-# Copy to terraform.tfvars (gitignored) and fill in values
-# Most defaults in variables.tf are fine — only override what you need
+# Copy to terraform.tfvars (gitignored) and fill in values.
+# Most defaults in variables.tf are fine — only override what you need.
+#
+# Per-environment usage:
+#   Each environment (development, test, production) gets its own AKS cluster
+#   and its own Terraform state file. The environment variable drives all naming:
+#     resource_group_name + environment → rg-argocd-demo-development
+#     cluster_name        + environment → aks-argocd-demo-development
+#     gateway_name        + environment → argocd-demo-development
+#     kubernetes_agent_name + environment → aks-argocd-demo-development
+#
+#   Set TF_VAR_environment and TF_CLI_ARGS_init in .envrc (see .envrc.example).
+#   You do NOT need to set 'environment' here if it's set via TF_VAR_environment.
 
 resource_group_name = "rg-argocd-demo"
 location            = "centralus"
 cluster_name        = "aks-argocd-demo"
 node_size           = "Standard_B2s"
-node_min_count      = 1
+node_min_count      = 2
 node_max_count      = 2
-environment         = "demo"
+# environment is required — set via TF_VAR_environment in .envrc (no default)
 
 # kubernetes_version = "1.30"  # Uncomment to pin; leave unset for latest default
 
