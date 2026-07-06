@@ -17,13 +17,22 @@ cd "$TF_DIR"
 echo ">>> Initialising Terraform..."
 terraform init -input=false
 
+outputs=$(terraform output -json)
+
+# If there are no outputs, print a message and exit
+if [ -z "$outputs" ] || [ "$outputs" = "null" ]; then
+  echo "  (no outputs)"
+  echo ""
+  echo "================================================================"
+  exit 0
+fi
+
 echo ""
 echo "================================================================"
 echo "  Terraform Outputs"
 echo "================================================================"
 echo ""
 
-outputs=$(terraform output -json)
 
 # Print non-sensitive outputs
 echo "$outputs" | jq -r '
