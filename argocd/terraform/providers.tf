@@ -22,10 +22,6 @@ terraform {
       source  = "hashicorp/time"
       version = "~> 0.11"
     }
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.0"
-    }
     octopusdeploy = {
       source  = "OctopusDeploy/octopusdeploy"
       version = "~> 1.0"

@@ -74,13 +74,10 @@ resource "null_resource" "wait_for_argocd_ip" {
   }
 }
 
-data "local_file" "argocd_ip" {
-  filename   = "${path.module}/argocd-server-ip.tmp"
-  depends_on = [null_resource.wait_for_argocd_ip]
-}
-
 locals {
-  argocd_external_ip = trimspace(data.local_file.argocd_ip.content)
+  # Read IP from temp file if present (written by wait_for_argocd_ip on apply).
+  # Falls back to empty string on destroy runs where the file doesn't exist.
+  argocd_external_ip = fileexists("${path.module}/argocd-server-ip.tmp") ? trimspace(file("${path.module}/argocd-server-ip.tmp")) : ""
   # Use override if set, otherwise compute from the live LoadBalancer IP
-  argocd_web_ui_url  = var.argocd_web_ui_url != "" ? var.argocd_web_ui_url : "https://${local.argocd_external_ip}"
+  argocd_web_ui_url  = var.argocd_web_ui_url != "" ? var.argocd_web_ui_url : (local.argocd_external_ip != "" ? "https://${local.argocd_external_ip}" : "")
 }
