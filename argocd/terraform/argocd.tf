@@ -34,50 +34,21 @@ resource "time_sleep" "wait_for_argocd" {
   create_duration = "30s"
 }
 
-# Poll until the ArgoCD LoadBalancer IP is assigned by Azure, then write it to
-# a temp file so subsequent resources can read it without a data source race condition.
-resource "null_resource" "wait_for_argocd_ip" {
+# Poll until the ArgoCD LoadBalancer IP is assigned by Azure.
+# Uses an external data source so the result is computed at apply time and
+# flows through Terraform state — no temp files, works on any runner.
+data "external" "argocd_ip" {
   depends_on = [time_sleep.wait_for_argocd]
 
-  triggers = {
-    argocd_release_id = helm_release.argocd.id
-  }
+  program = ["bash", "${path.module}/../scripts/get-argocd-ip.sh"]
 
-  provisioner "local-exec" {
-    environment = {
-      KUBECONFIG_CONTENT = azurerm_kubernetes_cluster.main.kube_config_raw
-      IP_FILE            = "${path.module}/argocd-server-ip.tmp"
-    }
-    interpreter = ["bash", "-c"]
-    command     = <<-EOT
-      set -euo pipefail
-      KUBECONFIG_FILE=$(mktemp)
-      echo "$KUBECONFIG_CONTENT" > "$KUBECONFIG_FILE"
-      export KUBECONFIG="$KUBECONFIG_FILE"
-      trap 'rm -f "$KUBECONFIG_FILE"' EXIT
-
-      echo ">>> Waiting for ArgoCD LoadBalancer IP (up to 5 min)..."
-      for i in $(seq 1 30); do
-        IP=$(kubectl get svc argocd-server -n argocd \
-          -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
-        if [ -n "$IP" ]; then
-          echo "    Got IP: $IP"
-          echo -n "$IP" > "$IP_FILE"
-          exit 0
-        fi
-        echo "    Attempt $i/30 — waiting 10s..."
-        sleep 10
-      done
-      echo "ERROR: Timed out waiting for ArgoCD LoadBalancer IP" >&2
-      exit 1
-    EOT
+  query = {
+    kubeconfig = azurerm_kubernetes_cluster.main.kube_config_raw
   }
 }
 
 locals {
-  # Read IP from temp file if present (written by wait_for_argocd_ip on apply).
-  # Falls back to empty string on destroy runs where the file doesn't exist.
-  argocd_external_ip = fileexists("${path.module}/argocd-server-ip.tmp") ? trimspace(file("${path.module}/argocd-server-ip.tmp")) : ""
+  argocd_external_ip = data.external.argocd_ip.result.ip
   # Use override if set, otherwise compute from the live LoadBalancer IP
   argocd_web_ui_url  = var.argocd_web_ui_url != "" ? var.argocd_web_ui_url : (local.argocd_external_ip != "" ? "https://${local.argocd_external_ip}" : "")
 }
