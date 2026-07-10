@@ -48,3 +48,8 @@ output "get_k8s_agent_logs" {
   description = "Tail Kubernetes agent logs to verify Octopus connection"
   value       = "kubectl logs -l app.kubernetes.io/name=kubernetes-agent -n ${var.kubernetes_agent_namespace} --context argocd-demo-${var.environment} -f"
 }
+
+output "get_grafana_ip" {
+  description = "Grafana LoadBalancer IP — available after ArgoCD syncs kube-prometheus (may take a few minutes post-apply)"
+  value       = "kubectl get svc kube-prometheus-grafana -n monitoring --context argocd-demo-${var.environment} -o jsonpath='{.status.loadBalancer.ingress[0].ip}'"
+}

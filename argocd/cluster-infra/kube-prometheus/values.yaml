@@ -32,7 +32,7 @@ prometheus:
 grafana:
   adminPassword: admin   # demo environment — change for anything shared
   service:
-    type: ClusterIP      # access via port-forward: kubectl port-forward svc/kube-prometheus-grafana 3000:80 -n monitoring
+    type: LoadBalancer      # access via external IP
   persistence:
     enabled: false       # keeps teardown clean
   resources:
