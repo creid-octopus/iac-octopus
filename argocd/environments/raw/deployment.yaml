@@ -5,6 +5,9 @@ metadata:
   namespace: demo-raw
   labels:
     app: demo-app
+  annotations:
+    argo.octopus.com/project: "argo-cd-demo-application"
+    argo.octopus.com/environment: "development"
 spec:
   replicas: 1
   selector:
