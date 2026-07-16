@@ -3,10 +3,12 @@ kind: Application
 metadata:
   name: demo-raw
   namespace: argocd
-  # Octopus ArgoCD gateway — maps this Application to a project/environment
-  annotations:
-    argo.octopus.com/project: "argo-cd-demo-application"
-    argo.octopus.com/environment: "development"
+  # Annotations are currently in conflict - need to manage multi env support before
+  # Re-enabling these annotations.
+  # annotations:
+  #   # Octopus ArgoCD gateway — maps this Application to a project/environment
+  #   octopus.com/project: demo-app-raw
+  #   octopus.com/environment: Development
 spec:
   project: default
   source:
