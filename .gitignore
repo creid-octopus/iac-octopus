@@ -7,6 +7,9 @@
 # Keep the lock file - ensures consistent provider versions across machines
 # **/.terraform.lock.hcl
 
+# Terragrunt
+**/.terragrunt-cache/
+
 # Kubeconfig / credentials
 *.kubeconfig
 kubeconfig
