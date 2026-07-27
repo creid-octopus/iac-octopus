@@ -10,7 +10,7 @@ resources:
 # To promote: copy this tag to staging/kustomization.yaml and push.
 images:
   - name: docker.io/kostiscodefresh/gitops-simple-app
-    newTag: v2.0
+    newTag: "v3.0"
 
 # Label all resources so you can tell which environment they came from
 commonLabels:
