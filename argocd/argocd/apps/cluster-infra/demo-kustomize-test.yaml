@@ -6,16 +6,16 @@ metadata:
   annotations:
     # Octopus ArgoCD gateway — maps this Application to a project/environment
     argo.octopus.com/project: "gitops-sample-app-kustomize"
-    argo.octopus.com/environment: "development"
+    argo.octopus.com/environment: "test"
 spec:
   project: default
   source:
     repoURL: https://github.com/creid-octopus/iac-octopus
     targetRevision: HEAD
-    path: argocd/environments/kustomize/overlays/dev
+    path: argocd/environments/kustomize/overlays/test
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo-kustomize-dev
+    namespace: demo-kustomize-test
   syncPolicy:
     automated:
       selfHeal: true

@@ -1,21 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: demo-kustomize-staging
+  name: demo-kustomize-dev
   namespace: argocd
   annotations:
     # Octopus ArgoCD gateway — maps this Application to a project/environment
-    octopus.com/project: demo-app-kustomize
-    octopus.com/environment: Test
+    argo.octopus.com/project: "gitops-sample-app-kustomize"
+    argo.octopus.com/environment: "production"
 spec:
   project: default
   source:
     repoURL: https://github.com/creid-octopus/iac-octopus
     targetRevision: HEAD
-    path: argocd/environments/kustomize/overlays/staging
+    path: argocd/environments/kustomize/overlays/production
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo-kustomize-staging
+    namespace: demo-kustomize-production
   syncPolicy:
     automated:
       selfHeal: true
