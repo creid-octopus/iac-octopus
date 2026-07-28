@@ -19,19 +19,19 @@ spec:
   sources:
     - repoURL: https://github.com/creid-octopus/iac-octopus
       targetRevision: HEAD
-      path: argocd/environments/kustomize/overlays/dev
+      path: argocd/environments/kustomize/overlays/dev/cannon-records
       name: dev-cannon-records
     - repoURL: https://github.com/creid-octopus/iac-octopus
       targetRevision: HEAD
-      path: argocd/environments/kustomize/overlays/dev
+      path: argocd/environments/kustomize/overlays/dev/apextime
       name: dev-apextime
     - repoURL: https://github.com/creid-octopus/iac-octopus
       targetRevision: HEAD
-      path: argocd/environments/kustomize/overlays/dev
+      path: argocd/environments/kustomize/overlays/dev/radiant-industries
       name: dev-radiant-industries
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo-kustomize-dev
+    namespace: argocd
   syncPolicy:
     automated:
       selfHeal: true
