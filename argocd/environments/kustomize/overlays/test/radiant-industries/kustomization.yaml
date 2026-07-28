@@ -17,3 +17,12 @@ commonLabels:
 commonAnnotations:
   octopus.com/tenant: radiant-industries
   octopus.com/environment: test
+
+patches:
+  - target:
+      kind: Namespace
+      name: placeholder
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: demo-kustomize-radiant-industries-test

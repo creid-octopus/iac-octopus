@@ -17,3 +17,12 @@ commonLabels:
 commonAnnotations:
   octopus.com/tenant: apextime
   octopus.com/environment: production
+
+patches:
+  - target:
+      kind: Namespace
+      name: placeholder
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: demo-kustomize-apextime-production
