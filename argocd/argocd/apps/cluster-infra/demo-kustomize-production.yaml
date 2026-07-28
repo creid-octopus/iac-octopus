@@ -4,18 +4,33 @@ metadata:
   name: demo-kustomize-production
   namespace: argocd
   annotations:
-    # Octopus ArgoCD gateway — maps this Application to a project/environment
-    argo.octopus.com/project: "gitops-sample-app-kustomize"
-    argo.octopus.com/environment: "production"
+    argo.octopus.com/project.production-cannon-records: "gitops-sample-app-kustomize"
+    argo.octopus.com/environment.production-cannon-records: "production"
+    argo.octopus.com/tenant.production-cannon-records: "cannon-records"
+    argo.octopus.com/project.production-apextime: "gitops-sample-app-kustomize"
+    argo.octopus.com/environment.production-apextime: "production"
+    argo.octopus.com/tenant.production-apextime: "apextime"
+    argo.octopus.com/project.production-radiant-industries: "gitops-sample-app-kustomize"
+    argo.octopus.com/environment.production-radiant-industries: "production"
+    argo.octopus.com/tenant.production-radiant-industries: "radiant-industries"
 spec:
   project: default
-  source:
-    repoURL: https://github.com/creid-octopus/iac-octopus
-    targetRevision: HEAD
-    path: argocd/environments/kustomize/overlays/production
+  sources:
+    - repoURL: https://github.com/creid-octopus/iac-octopus
+      targetRevision: HEAD
+      path: argocd/environments/kustomize/overlays/production/cannon-records
+      name: production-cannon-records
+    - repoURL: https://github.com/creid-octopus/iac-octopus
+      targetRevision: HEAD
+      path: argocd/environments/kustomize/overlays/production/apextime
+      name: production-apextime
+    - repoURL: https://github.com/creid-octopus/iac-octopus
+      targetRevision: HEAD
+      path: argocd/environments/kustomize/overlays/production/radiant-industries
+      name: production-radiant-industries
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo-kustomize-production
+    namespace: argocd
   syncPolicy:
     automated:
       selfHeal: true

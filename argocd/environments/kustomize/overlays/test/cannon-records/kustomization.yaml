@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: demo-kustomize-cannon-records-test
+resources:
+  - ../../../base
+
+images:
+  - name: docker.io/kostiscodefresh/gitops-simple-app
+    newTag: "v1.0"
+
+commonLabels:
+  env: test
+  tenant: cannon-records
+  managed-by: octopus
+
+commonAnnotations:
+  octopus.com/tenant: cannon-records
+  octopus.com/environment: test

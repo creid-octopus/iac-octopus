@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: demo-kustomize-apextime-production
+resources:
+  - ../../../base
+
+images:
+  - name: docker.io/kostiscodefresh/gitops-simple-app
+    newTag: "v1.0"
+
+commonLabels:
+  env: production
+  tenant: apextime
+  managed-by: octopus
+
+commonAnnotations:
+  octopus.com/tenant: apextime
+  octopus.com/environment: production

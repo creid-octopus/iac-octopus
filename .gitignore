@@ -24,3 +24,4 @@ kubeconfig
 
 # macOS
 .DS_Store
+argocd-octopus-demo.code-workspace

@@ -4,18 +4,33 @@ metadata:
   name: demo-kustomize-test
   namespace: argocd
   annotations:
-    # Octopus ArgoCD gateway — maps this Application to a project/environment
-    argo.octopus.com/project: "gitops-sample-app-kustomize"
-    argo.octopus.com/environment: "test"
+    argo.octopus.com/project.test-cannon-records: "gitops-sample-app-kustomize"
+    argo.octopus.com/environment.test-cannon-records: "test"
+    argo.octopus.com/tenant.test-cannon-records: "cannon-records"
+    argo.octopus.com/project.test-apextime: "gitops-sample-app-kustomize"
+    argo.octopus.com/environment.test-apextime: "test"
+    argo.octopus.com/tenant.test-apextime: "apextime"
+    argo.octopus.com/project.test-radiant-industries: "gitops-sample-app-kustomize"
+    argo.octopus.com/environment.test-radiant-industries: "test"
+    argo.octopus.com/tenant.test-radiant-industries: "radiant-industries"
 spec:
   project: default
-  source:
-    repoURL: https://github.com/creid-octopus/iac-octopus
-    targetRevision: HEAD
-    path: argocd/environments/kustomize/overlays/test
+  sources:
+    - repoURL: https://github.com/creid-octopus/iac-octopus
+      targetRevision: HEAD
+      path: argocd/environments/kustomize/overlays/test/cannon-records
+      name: test-cannon-records
+    - repoURL: https://github.com/creid-octopus/iac-octopus
+      targetRevision: HEAD
+      path: argocd/environments/kustomize/overlays/test/apextime
+      name: test-apextime
+    - repoURL: https://github.com/creid-octopus/iac-octopus
+      targetRevision: HEAD
+      path: argocd/environments/kustomize/overlays/test/radiant-industries
+      name: test-radiant-industries
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo-kustomize-test
+    namespace: argocd
   syncPolicy:
     automated:
       selfHeal: true
