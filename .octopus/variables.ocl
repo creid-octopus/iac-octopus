@@ -1,0 +1,17 @@
+variable "Project.AzureAccount" {
+    type = "AzureAccount"
+
+    value "tenants-azure-subscription" {}
+}
+
+variable "Project.Terraform.ArgoTarget" {
+    value "-target=helm_release.argocd" {
+        description = "Used to provide `-target` parameters to core resource creation"
+    }
+}
+
+variable "Project.Terraform.CoreTarget" {
+    value "-target=azurerm_kubernetes_cluster.main" {
+        description = "Used to provide `-target` parameters to core resource creation"
+    }
+}

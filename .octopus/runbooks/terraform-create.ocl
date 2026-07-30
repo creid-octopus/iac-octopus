@@ -1,0 +1,336 @@
+name = "Terraform Create"
+cancel_queued_tasks = true
+cancel_running_tasks = true
+default_guided_failure_mode = "EnvironmentDefault"
+description = ""
+environment_scope = "FromProjectLifecycles"
+multi_tenancy_mode = "Tenanted"
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    type = "Default"
+}
+
+process {
+    step "terraform-plan" {
+        name = "Terraform Plan - Main Cluster"
+
+        action "terraform-plan-main-cluster" {
+            action_type = "Octopus.TerraformPlan"
+            is_disabled = true
+            properties = {
+                Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
+                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
+                Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
+                Octopus.Action.Script.ScriptSource = "GitRepository"
+                Octopus.Action.Terraform.AdditionalActionParams = "#{Project.Terraform.CoreTarget}"
+                Octopus.Action.Terraform.AllowPluginDownloads = "True"
+                Octopus.Action.Terraform.AzureAccount = "True"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_grpc_url\":\"demo.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"#{Octopus.Space.Name}\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
+                Octopus.Action.Terraform.GoogleCloudAccount = "False"
+                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.PlanJsonOutput = "False"
+                Octopus.Action.Terraform.RunAutomaticFileSubstitution = "True"
+                Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
+                OctopusUseBundledTooling = "False"
+            }
+            worker_pool = "hosted-ubuntu"
+
+            container {
+                feed = "docker-hub"
+                image = "octopusdeploy/worker-tools:6.6.3-ubuntu.22.04"
+            }
+
+            git_dependencies {
+                default_branch = "main"
+                git_credential_id = "GitCredentials-3122"
+                git_credential_type = "Library"
+                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
+            }
+        }
+    }
+
+    step "approve-terraform-plan" {
+        condition = "Variable"
+        name = "Approve Main Cluster Terraform Plan"
+        properties = {
+            Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Action[Terraform Plan - Main Cluster].Output.TerraformPlanDetailedExitCode != '2'}#{/unless}"
+        }
+
+        action "approve-main-cluster-terraform-plan" {
+            action_type = "Octopus.Manual"
+            is_disabled = true
+            properties = {
+                Octopus.Action.Manual.BlockConcurrentDeployments = "False"
+                Octopus.Action.Manual.Instructions = <<-EOT
+                    ```
+                    #{Octopus.Action[Terraform Plan - Main Cluster].Output.TerraformPlanOutput}
+                    ```
+                    EOT
+            }
+        }
+    }
+
+    step "terraform-apply" {
+        name = " Terraform Apply - Main Cluster"
+
+        action "terraform-apply-main-cluster" {
+            action_type = "Octopus.TerraformApply"
+            properties = {
+                Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
+                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
+                Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
+                Octopus.Action.Script.ScriptSource = "GitRepository"
+                Octopus.Action.Terraform.AdditionalActionParams = "#{Project.Terraform.CoreTarget}"
+                Octopus.Action.Terraform.AllowPluginDownloads = "True"
+                Octopus.Action.Terraform.AzureAccount = "True"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_grpc_url\":\"demo.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"#{Octopus.Space.Name}\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
+                Octopus.Action.Terraform.GoogleCloudAccount = "False"
+                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.PlanJsonOutput = "False"
+                Octopus.Action.Terraform.RunAutomaticFileSubstitution = "True"
+                Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
+                OctopusUseBundledTooling = "False"
+            }
+            worker_pool = "hosted-ubuntu"
+
+            container {
+                feed = "docker-hub"
+                image = "octopusdeploy/worker-tools:6.6.4-ubuntu.24.04"
+            }
+
+            git_dependencies {
+                default_branch = "main"
+                git_credential_id = "GitCredentials-3122"
+                git_credential_type = "Library"
+                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
+            }
+        }
+    }
+
+    step "terraform-plan-argo-cd" {
+        name = "Terraform Plan - Argo CD"
+
+        action {
+            action_type = "Octopus.TerraformPlan"
+            is_disabled = true
+            properties = {
+                Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
+                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
+                Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
+                Octopus.Action.Script.ScriptSource = "GitRepository"
+                Octopus.Action.Terraform.AdditionalActionParams = "#{Project.Terraform.ArgoTarget}"
+                Octopus.Action.Terraform.AllowPluginDownloads = "True"
+                Octopus.Action.Terraform.AzureAccount = "True"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_grpc_url\":\"demo.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"#{Octopus.Space.Name}\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
+                Octopus.Action.Terraform.GoogleCloudAccount = "False"
+                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.PlanJsonOutput = "False"
+                Octopus.Action.Terraform.RunAutomaticFileSubstitution = "True"
+                Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
+                OctopusUseBundledTooling = "False"
+            }
+            worker_pool = "hosted-ubuntu"
+
+            container {
+                feed = "docker-hub"
+                image = "octopusdeploy/worker-tools:6.6.3-ubuntu.22.04"
+            }
+
+            git_dependencies {
+                default_branch = "main"
+                git_credential_id = "GitCredentials-3122"
+                git_credential_type = "Library"
+                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
+            }
+        }
+    }
+
+    step "approve-argo-cd-cluster-terraform-plan" {
+        condition = "Variable"
+        name = "Approve Argo CD Cluster Terraform Plan"
+        properties = {
+            Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Action[Terraform Plan - Argo CD].Output.TerraformPlanDetailedExitCode != '2'}#{/unless}"
+        }
+
+        action {
+            action_type = "Octopus.Manual"
+            is_disabled = true
+            properties = {
+                Octopus.Action.Manual.BlockConcurrentDeployments = "False"
+                Octopus.Action.Manual.Instructions = <<-EOT
+                    ```
+                    #{Octopus.Action[Terraform Plan - Argo CD].Output.TerraformPlanOutput}
+                    ```
+                    EOT
+            }
+        }
+    }
+
+    step "terraform-apply-argo-cd" {
+        name = " Terraform Apply - Argo CD"
+
+        action {
+            action_type = "Octopus.TerraformApply"
+            properties = {
+                Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
+                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
+                Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
+                Octopus.Action.Script.ScriptSource = "GitRepository"
+                Octopus.Action.Terraform.AdditionalActionParams = "#{Project.Terraform.ArgoTarget}"
+                Octopus.Action.Terraform.AllowPluginDownloads = "True"
+                Octopus.Action.Terraform.AzureAccount = "True"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_grpc_url\":\"demo.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"#{Octopus.Space.Name}\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
+                Octopus.Action.Terraform.GoogleCloudAccount = "False"
+                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.PlanJsonOutput = "False"
+                Octopus.Action.Terraform.RunAutomaticFileSubstitution = "True"
+                Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
+                OctopusUseBundledTooling = "False"
+            }
+            worker_pool = "hosted-ubuntu"
+
+            container {
+                feed = "docker-hub"
+                image = "octopusdeploy/worker-tools:6.6.3-ubuntu.22.04"
+            }
+
+            git_dependencies {
+                default_branch = "main"
+                git_credential_id = "GitCredentials-3122"
+                git_credential_type = "Library"
+                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
+            }
+        }
+    }
+
+    step "terraform-plan-additional-resources" {
+        name = "Terraform Plan - Additional Resources"
+
+        action {
+            action_type = "Octopus.TerraformPlan"
+            properties = {
+                Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
+                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
+                Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
+                Octopus.Action.Script.ScriptSource = "GitRepository"
+                Octopus.Action.Terraform.AllowPluginDownloads = "True"
+                Octopus.Action.Terraform.AzureAccount = "True"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_grpc_url\":\"demo.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"#{Octopus.Space.Name}\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
+                Octopus.Action.Terraform.GoogleCloudAccount = "False"
+                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.PlanJsonOutput = "False"
+                Octopus.Action.Terraform.RunAutomaticFileSubstitution = "True"
+                Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
+                OctopusUseBundledTooling = "False"
+            }
+            worker_pool = "hosted-ubuntu"
+
+            container {
+                feed = "docker-hub"
+                image = "octopusdeploy/worker-tools:6.6.3-ubuntu.22.04"
+            }
+
+            git_dependencies {
+                default_branch = "main"
+                git_credential_id = "GitCredentials-3122"
+                git_credential_type = "Library"
+                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
+            }
+        }
+    }
+
+    step "approve-terraform-plan-1" {
+        name = "Approve Additional Resource Terraform Plan"
+
+        action "approve-additional-resource-terraform-plan" {
+            action_type = "Octopus.Manual"
+            properties = {
+                Octopus.Action.Manual.BlockConcurrentDeployments = "False"
+                Octopus.Action.Manual.Instructions = <<-EOT
+                    ```
+                    #{Octopus.Action[Terraform Plan - Additional Resources].Output.TerraformPlanOutput}
+                    ```
+                    EOT
+            }
+        }
+    }
+
+    step "terraform-apply-additional-resources" {
+        name = "Terraform Apply - Additional Resources"
+
+        action {
+            action_type = "Octopus.TerraformApply"
+            properties = {
+                Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
+                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
+                Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
+                Octopus.Action.Script.ScriptSource = "GitRepository"
+                Octopus.Action.Terraform.AllowPluginDownloads = "True"
+                Octopus.Action.Terraform.AzureAccount = "True"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_grpc_url\":\"demo.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"#{Octopus.Space.Name}\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
+                Octopus.Action.Terraform.GoogleCloudAccount = "False"
+                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.PlanJsonOutput = "False"
+                Octopus.Action.Terraform.RunAutomaticFileSubstitution = "True"
+                Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
+                OctopusUseBundledTooling = "False"
+            }
+            worker_pool = "hosted-ubuntu"
+
+            container {
+                feed = "docker-hub"
+                image = "octopusdeploy/worker-tools:6.6.3-ubuntu.22.04"
+            }
+
+            git_dependencies {
+                default_branch = "main"
+                git_credential_id = "GitCredentials-3122"
+                git_credential_type = "Library"
+                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
+            }
+        }
+    }
+
+    step "write-out-terraform-outputs" {
+        name = "Write Out Terraform Outputs"
+
+        action {
+            action_type = "Octopus.AzurePowerShell"
+            properties = {
+                Octopus.Action.Azure.AccountId = "#{Project.AzureAccount}"
+                Octopus.Action.EnabledFeatures = "Octopus.Features.SubstituteInFiles"
+                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.Script.ScriptFileName = "argocd/scripts/terraform-outputs.sh"
+                Octopus.Action.Script.ScriptSource = "GitRepository"
+                Octopus.Action.SubstituteInFiles.TargetFiles = <<-EOT
+                    **/*.tf
+                    **/*.tfvars
+                    EOT
+                OctopusUseBundledTooling = "False"
+            }
+            worker_pool = "hosted-ubuntu"
+
+            container {
+                feed = "docker-hub"
+                image = "octopusdeploy/worker-tools:6.6.3-ubuntu.22.04"
+            }
+
+            git_dependencies {
+                default_branch = "main"
+                git_credential_type = "GitHub"
+                github_connection_id = "GitHubAppConnections-461"
+                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
+            }
+        }
+    }
+}
