@@ -47,8 +47,8 @@ process {
 
             git_dependencies {
                 default_branch = "main"
-                git_credential_id = "GitCredentials-3122"
-                git_credential_type = "Library"
+                git_credential_type = "GitHub"
+                github_connection_id = "GitHubAppConnections-21"
                 repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
             }
         }
