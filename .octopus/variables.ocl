@@ -22,6 +22,6 @@ variable "Terraform.Environment.Name" {
     }
 
     value "production" {
-        environment = ["production"]
+        environment = ["meta-production"]
     }
 }
