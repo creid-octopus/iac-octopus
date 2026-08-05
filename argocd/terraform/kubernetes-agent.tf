@@ -10,7 +10,7 @@
 
 locals {
   # Derive the polling comms address from the API URL.
-  # https://demo.octopus.app -> https://polling.demo.octopus.app
+  # https://creid.octopus.app -> https://polling.creid.octopus.app
   octopus_polling_url = replace(var.octopus_api_url, "https://", "https://polling.")
   # Environment-suffixed agent name in Octopus (e.g. creid-aks-meta-nonproduction)
   agent_name          = "${var.kubernetes_agent_name}-${var.environment}"

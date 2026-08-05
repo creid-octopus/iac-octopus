@@ -36,10 +36,10 @@ argocd_admin_password      = "REPLACE_WITH_PLAINTEXT_PASSWORD"
 argocd_insecure   = true
 
 # ─── Octopus Deploy ──────────────────────────────────────────────────────────
-octopus_api_url      = "https://demo.octopus.app"
-octopus_grpc_url     = "demo.octopus.app:8443"  # 8443 = gRPC server; 443 = REST API (wrong port)
+octopus_api_url      = "https://creid.octopus.app"
+octopus_grpc_url     = "creid.octopus.app:8443"  # 8443 = gRPC server; 443 = REST API (wrong port)
 octopus_api_key      = "API-REPLACE_WITH_YOUR_KEY"
-octopus_space_id     = "Spaces-3705"
+octopus_space_id     = "Spaces-1"
 octopus_environments = "development,test,production"
 
 # ─── Gateway ─────────────────────────────────────────────────────────────────

@@ -97,7 +97,7 @@ argocd_admin_password_hash = "$2a$10$..."
 # Your Octopus space name — must match exactly as it appears in the UI
 octopus_space_name = "Your Space Name"
 
-# Override these if you're not using demo.octopus.app / Spaces-3705:
+# Override these if you're not using creid.octopus.app / Spaces-1:
 # octopus_api_url      = "https://yourinstance.octopus.app"
 # octopus_grpc_url     = "yourinstance.octopus.app:8443"
 # octopus_space_id     = "Spaces-XXXX"
@@ -413,7 +413,7 @@ Also updates the ArgoCD Helm release to add a dedicated `octopus` service accoun
 - Gateway chart: `oci://registry-1.docker.io/octopusdeploy/octopus-argocd-gateway-chart` v1.23.0
 - Gateway namespace: `octopus-argocd-gateway`
 - Gateway name in Octopus: `argocd-demo`
-- Space: `CReid - Sandbox` (`Spaces-3705`)
+- Space: `CReid - Sandbox` (`Spaces-1`)
 - Environments: `Development`, `Test`, `Production`
 - ArgoCD account for gateway: `octopus` (apiKey-only, scoped RBAC)
 - ArgoCD insecure: `true` (self-signed cert on internal gRPC connection)
@@ -493,7 +493,7 @@ Unlike the ArgoCD gateway instance (which has no public delete API), the Kuberne
 - Namespace: `octopus-k8s-agent`
 - Target name: `creid-aks`
 - Target tags: `k8s-agent`
-- Polling address: derived from `octopus_api_url` (`https://polling.demo.octopus.app`)
+- Polling address: derived from `octopus_api_url` (`https://polling.creid.octopus.app`)
 
 ### Prerequisites
 

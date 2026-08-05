@@ -74,13 +74,13 @@ variable "argocd_insecure" {
 variable "octopus_api_url" {
   description = "Octopus Deploy HTTP API URL"
   type        = string
-  default     = "https://demo.octopus.app"
+  default     = "https://creid.octopus.app"
 }
 
 variable "octopus_grpc_url" {
   description = "Octopus Deploy gRPC URL including port. Octopus Cloud uses 8443 for gRPC (443 is the REST API)."
   type        = string
-  default     = "demo.octopus.app:8443"
+  default     = "creid.octopus.app:8443"
 }
 
 variable "octopus_grpc_plaintext" {
@@ -98,7 +98,7 @@ variable "octopus_api_key" {
 variable "octopus_space_id" {
   description = "Octopus Deploy Space ID the gateway registers into"
   type        = string
-  default     = "Spaces-3705"
+  default     = "Spaces-1"
 }
 
 variable "octopus_environments" {

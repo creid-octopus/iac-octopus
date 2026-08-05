@@ -23,8 +23,8 @@ if [ -z "$ARGOCD_SERVER" ]; then
   exit 1
 fi
 echo "    ArgoCD server: $ARGOCD_SERVER"
-OCTOPUS_URL="${OCTOPUS_URL:-https://demo.octopus.app}"
-OCTOPUS_SPACE_ID="${OCTOPUS_SPACE_ID:-Spaces-3705}"
+OCTOPUS_URL="${OCTOPUS_URL:-https://creid.octopus.app}"
+OCTOPUS_SPACE_ID="${OCTOPUS_SPACE_ID:-Spaces-1}"
 # These are environment-specific. Set ENVIRONMENT or override each var directly.
 ENVIRONMENT="${ENVIRONMENT:-${TF_VAR_environment:?Set ENVIRONMENT or TF_VAR_environment to the target environment (e.g. development)}}"
 GATEWAY_NAME="${GATEWAY_NAME:-argocd-demo-${ENVIRONMENT}}"
