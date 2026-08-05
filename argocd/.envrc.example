@@ -27,7 +27,7 @@ export TF_VAR_argocd_admin_password="your-argocd-password"   # same value as ARG
 export TF_VAR_octopus_api_key="API-YOUR-KEY-HERE"             # same value as OCTOPUS_API_KEY above
 
 # Environment — required, no default. Must match the Octopus environment name in lowercase.
-# This drives all resource naming: aks-argocd-demo-${environment}, rg-argocd-demo-${environment}, etc.
+# This drives all resource naming: creid-aks-${environment}, creid-rg-${environment}, etc.
 # Change this value when switching between environments (development → test → production).
 export TF_VAR_environment="development"
 

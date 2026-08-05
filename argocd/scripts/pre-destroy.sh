@@ -29,8 +29,8 @@ OCTOPUS_SPACE_ID="${OCTOPUS_SPACE_ID:-Spaces-3705}"
 ENVIRONMENT="${ENVIRONMENT:-${TF_VAR_environment:?Set ENVIRONMENT or TF_VAR_environment to the target environment (e.g. development)}}"
 GATEWAY_NAME="${GATEWAY_NAME:-argocd-demo-${ENVIRONMENT}}"
 KUBECTL_CONTEXT="${KUBECTL_CONTEXT:-argocd-demo-${ENVIRONMENT}}"
-RESOURCE_GROUP="${RESOURCE_GROUP:-rg-argocd-demo-${ENVIRONMENT}}"
-CLUSTER_NAME="${CLUSTER_NAME:-aks-argocd-demo-${ENVIRONMENT}}"
+RESOURCE_GROUP="${RESOURCE_GROUP:-creid-rg-${ENVIRONMENT}}"
+CLUSTER_NAME="${CLUSTER_NAME:-creid-aks-${ENVIRONMENT}}"
 
 echo ">>> Logging in to ArgoCD at $ARGOCD_SERVER"
 argocd login "$ARGOCD_SERVER" \

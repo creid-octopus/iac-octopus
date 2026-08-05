@@ -4,17 +4,17 @@
 # Per-environment usage:
 #   Each environment (development, test, production) gets its own AKS cluster
 #   and its own Terraform state file. The environment variable drives all naming:
-#     resource_group_name + environment → rg-argocd-demo-development
-#     cluster_name        + environment → aks-argocd-demo-development
-#     gateway_name        + environment → argocd-demo-development
-#     kubernetes_agent_name + environment → aks-argocd-demo-development
+#     resource_group_name + environment → creid-rg-meta-nonproduction
+#     cluster_name        + environment → creid-aks-meta-nonproduction
+#     gateway_name        + environment → argocd-demo-meta-nonproduction
+#     kubernetes_agent_name + environment → creid-aks-meta-nonproduction
 #
 #   Set TF_VAR_environment and TF_CLI_ARGS_init in .envrc (see .envrc.example).
 #   You do NOT need to set 'environment' here if it's set via TF_VAR_environment.
 
-resource_group_name = "rg-argocd-demo"
+resource_group_name = "creid-rg"
 location            = "centralus"
-cluster_name        = "aks-argocd-demo"
+cluster_name        = "creid-aks"
 node_size           = "Standard_B2s"
 node_min_count      = 2
 node_max_count      = 2
@@ -51,7 +51,7 @@ gateway_chart_version = "1.23.0"  # check https://hub.docker.com/r/octopusdeploy
 octopus_space_name = "CReid - Sandbox"
 
 # Other agent defaults are fine from variables.tf — override only if needed:
-# kubernetes_agent_name          = "aks-argocd-demo"
+# kubernetes_agent_name          = "creid-aks"
 # kubernetes_agent_namespace     = "octopus-k8s-agent"
 # kubernetes_agent_roles         = ["k8s-agent"]
 # kubernetes_agent_chart_version = "3.*.*"  # check https://hub.docker.com/r/octopusdeploy/kubernetes-agent/tags

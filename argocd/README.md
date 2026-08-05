@@ -141,7 +141,7 @@ argocd app list
 - ArgoCD at `https://<external-ip>` (self-signed cert — click through the browser warning)
 - Grafana in `monitoring` namespace (`kubectl port-forward svc/kube-prometheus-grafana 3000:80 -n monitoring`)
 - Octopus ArgoCD Gateway connected to your space
-- Octopus Kubernetes Agent registered as a deployment target (`aks-argocd-demo`)
+- Octopus Kubernetes Agent registered as a deployment target (`creid-aks`)
 - Demo applications: kustomize (dev + staging), helm, and raw YAML
 
 ### Gotchas
@@ -263,8 +263,8 @@ kubectl get nodes --context argocd-demo
 Stop the cluster when not in use (saves node VM costs; ~5 min to restart):
 
 ```bash
-az aks stop --resource-group rg-argocd-demo --name aks-argocd-demo
-az aks start --resource-group rg-argocd-demo --name aks-argocd-demo
+az aks stop --resource-group creid-rg --name creid-aks
+az aks start --resource-group creid-rg --name creid-aks
 ```
 
 > **Note:** The static Public IP (added in Phase 2) continues to accrue at ~$0.005/hr even while the cluster is stopped. Release it if leaving idle for an extended period.
@@ -491,7 +491,7 @@ Unlike the ArgoCD gateway instance (which has no public delete API), the Kuberne
 **Decisions baked in:**
 - Agent chart: `oci://registry-1.docker.io/octopusdeploy/kubernetes-agent` `3.*.*`
 - Namespace: `octopus-k8s-agent`
-- Target name: `aks-argocd-demo`
+- Target name: `creid-aks`
 - Target tags: `k8s-agent`
 - Polling address: derived from `octopus_api_url` (`https://polling.demo.octopus.app`)
 
@@ -525,7 +525,7 @@ terraform output get_k8s_agent_logs
 # (run the printed kubectl command)
 ```
 
-In Octopus Deploy → Infrastructure → Deployment Targets, `aks-argocd-demo` should appear as a healthy Kubernetes agent target.
+In Octopus Deploy → Infrastructure → Deployment Targets, `creid-aks` should appear as a healthy Kubernetes agent target.
 
 ### Teardown note
 
@@ -566,7 +566,7 @@ The Octopus ArgoCD Instance (not the same as a deployment target machine) does n
   ```bash
   kubectl config delete-context argocd-demo
   kubectl config delete-cluster argocd-demo
-  kubectl config delete-user clusterUser_rg-argocd-demo_aks-argocd-demo
+  kubectl config delete-user clusterUser_creid-rg_creid-aks
   ```
 - **Static Public IP**: Not applicable — we're using a dynamic IP assigned by the LoadBalancer service, which is released with the cluster.
 

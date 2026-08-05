@@ -1,7 +1,7 @@
 # Raw YAML — Direct K8s Agent Deploy (tenant-aware)
 #
 # Paste into an Octopus "Deploy Kubernetes YAML" step targeting
-# the aks-argocd-demo deployment target (role: k8s-agent).
+# the creid-aks deployment target (role: k8s-agent).
 #
 # Octopus resolves #{...} variables before applying. The Namespace resource
 # is included so this step is self-contained — no pre-existing namespace needed.

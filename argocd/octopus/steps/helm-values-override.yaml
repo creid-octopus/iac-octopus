@@ -1,7 +1,7 @@
 # Helm — Direct K8s Agent Deploy (values override)
 #
 # Use this in an Octopus "Upgrade a Helm Chart" step targeting the
-# aks-argocd-demo deployment target (role: k8s-agent).
+# creid-aks deployment target (role: k8s-agent).
 #
 # Step configuration:
 #   Chart source:   Git repository (same repo)

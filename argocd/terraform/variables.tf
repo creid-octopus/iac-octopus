@@ -1,7 +1,7 @@
 variable "resource_group_name" {
-  description = "Base name for the Azure resource group. The environment is appended automatically: rg-argocd-demo-development."
+  description = "Base name for the Azure resource group. The environment is appended automatically: creid-rg-meta-nonproduction."
   type        = string
-  default     = "rg-argocd-demo"
+  default     = "creid-rg"
 }
 
 variable "location" {
@@ -11,9 +11,9 @@ variable "location" {
 }
 
 variable "cluster_name" {
-  description = "Base name for the AKS cluster. The environment is appended automatically: aks-argocd-demo-development."
+  description = "Base name for the AKS cluster. The environment is appended automatically: creid-aks-meta-nonproduction."
   type        = string
-  default     = "aks-argocd-demo"
+  default     = "creid-aks"
 }
 
 variable "kubernetes_version" {
@@ -139,7 +139,7 @@ variable "octopus_space_name" {
 variable "kubernetes_agent_name" {
   description = "Name for the Kubernetes agent deployment target in Octopus. Also used as the Helm release name — must be unique per cluster."
   type        = string
-  default     = "aks-argocd-demo"
+  default     = "creid-aks"
 }
 
 variable "kubernetes_agent_namespace" {
