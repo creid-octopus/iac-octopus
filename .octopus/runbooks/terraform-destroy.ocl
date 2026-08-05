@@ -30,7 +30,7 @@ process {
                 Octopus.Action.Terraform.AdditionalActionParams = "-destroy"
                 Octopus.Action.Terraform.AllowPluginDownloads = "True"
                 Octopus.Action.Terraform.AzureAccount = "True"
-                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_grpc_url\":\"demo.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"#{Octopus.Space.Name}\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_grpc_url\":\"demo.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"#{Octopus.Space.Name}\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Terraform.Environment.Name | ToLower}\"}"
                 Octopus.Action.Terraform.GoogleCloudAccount = "False"
                 Octopus.Action.Terraform.ManagedAccount = "None"
                 Octopus.Action.Terraform.PlanJsonOutput = "False"
@@ -38,17 +38,17 @@ process {
                 Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
                 OctopusUseBundledTooling = "False"
             }
-            worker_pool = "hosted-ubuntu"
+            worker_pool_variable = "ExecutionContainer.Linux.WorkerPool"
 
             container {
                 feed = "docker-hub"
-                image = "octopusdeploy/worker-tools:6.6.3-ubuntu.22.04"
+                image = "#{ExecutionContainer.Linux.DefaultImage}"
             }
 
             git_dependencies {
                 default_branch = "main"
-                git_credential_id = "GitCredentials-3122"
-                git_credential_type = "Library"
+                git_credential_type = "GitHub"
+                github_connection_id = "GitHubAppConnections-21"
                 repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
             }
         }
@@ -85,7 +85,7 @@ process {
                 Octopus.Action.Terraform.AdditionalActionParams = "-destroy"
                 Octopus.Action.Terraform.AllowPluginDownloads = "True"
                 Octopus.Action.Terraform.AzureAccount = "True"
-                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_grpc_url\":\"demo.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"#{Octopus.Space.Name}\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
+                Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_grpc_url\":\"creid.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"#{Octopus.Space.Name}\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Terraform.Environment.Name | ToLower}\"}"
                 Octopus.Action.Terraform.GoogleCloudAccount = "False"
                 Octopus.Action.Terraform.ManagedAccount = "None"
                 Octopus.Action.Terraform.PlanJsonOutput = "False"
@@ -93,17 +93,17 @@ process {
                 Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
                 OctopusUseBundledTooling = "False"
             }
-            worker_pool = "hosted-ubuntu"
+            worker_pool_variable = "ExecutionContainer.Linux.WorkerPool"
 
             container {
                 feed = "docker-hub"
-                image = "octopusdeploy/worker-tools:6.6.3-ubuntu.22.04"
+                image = "#{ExecutionContainer.Linux.DefaultImage}"
             }
 
             git_dependencies {
                 default_branch = "main"
-                git_credential_id = "GitCredentials-3122"
-                git_credential_type = "Library"
+                git_credential_type = "GitHub"
+                github_connection_id = "GitHubAppConnections-21"
                 repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
             }
         }
