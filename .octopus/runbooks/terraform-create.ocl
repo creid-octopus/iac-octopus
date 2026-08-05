@@ -3,7 +3,8 @@ cancel_queued_tasks = true
 cancel_running_tasks = true
 default_guided_failure_mode = "EnvironmentDefault"
 description = ""
-environment_scope = "FromProjectLifecycles"
+environment_scope = "Specified"
+environments = ["meta-nonproduction", "meta-production"]
 multi_tenancy_mode = "Tenanted"
 
 connectivity_policy {
