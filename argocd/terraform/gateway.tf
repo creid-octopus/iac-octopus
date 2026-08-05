@@ -142,7 +142,7 @@ resource "helm_release" "gateway" {
           name                        = local.gateway_name
           serverApiUrl                = var.octopus_api_url
           spaceId                     = var.octopus_space_id
-          environments                = var.octopus_environments
+          environments                = split(",", var.octopus_environments)
           serverAccessTokenSecretName = kubernetes_secret.octopus_api_key.metadata[0].name
           serverAccessTokenSecretKey  = "OCTOPUS_SERVER_ACCESS_TOKEN"
         }

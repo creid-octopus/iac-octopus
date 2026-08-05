@@ -101,7 +101,7 @@ octopus_space_name = "Your Space Name"
 # octopus_api_url      = "https://yourinstance.octopus.app"
 # octopus_grpc_url     = "yourinstance.octopus.app:8443"
 # octopus_space_id     = "Spaces-XXXX"
-# octopus_environments = ["Development", "Test", "Production"]
+# octopus_environments = "development,test,production"
 ```
 
 ### Step 5 — Apply

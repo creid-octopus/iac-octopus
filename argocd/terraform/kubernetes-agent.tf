@@ -26,7 +26,7 @@ resource "octopusdeploy_tentacle_certificate" "k8s_agent" {}
 # Look up environment IDs for the target registration.
 # Uses for_each over var.octopus_environments (names) to resolve to IDs.
 data "octopusdeploy_environments" "k8s_agent" {
-  for_each = toset(var.octopus_environments)
+  for_each = toset(split(",", var.octopus_environments))
   name     = each.value
   space_id = var.octopus_space_id
   skip     = 0
@@ -109,7 +109,7 @@ resource "helm_release" "kubernetes_agent" {
 
   set_list {
     name  = "agent.deploymentTarget.initial.environments"
-    value = var.octopus_environments
+    value = split(",", var.octopus_environments)
   }
   set_list {
     name  = "agent.deploymentTarget.initial.tags"

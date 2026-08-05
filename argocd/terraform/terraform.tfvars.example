@@ -40,7 +40,7 @@ octopus_api_url      = "https://demo.octopus.app"
 octopus_grpc_url     = "demo.octopus.app:8443"  # 8443 = gRPC server; 443 = REST API (wrong port)
 octopus_api_key      = "API-REPLACE_WITH_YOUR_KEY"
 octopus_space_id     = "Spaces-3705"
-octopus_environments = ["Development", "Test", "Production"]
+octopus_environments = "development,test,production"
 
 # ─── Gateway ─────────────────────────────────────────────────────────────────
 gateway_name          = "argocd-demo"

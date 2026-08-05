@@ -102,9 +102,8 @@ variable "octopus_space_id" {
 }
 
 variable "octopus_environments" {
-  description = "Octopus Deploy environment names to associate with this gateway"
-  type        = list(string)
-  default     = "[#{Terraform.Environment.Name}]"
+  description = "Octopus Deploy environment names, comma-separated (e.g., \"development,test\"). Passed via TF_VAR_octopus_environments from Octopus."
+  type        = string
 }
 
 # ─── Gateway ───────────────────────────────────────────────────────────────
