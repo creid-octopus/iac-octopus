@@ -38,11 +38,11 @@ process {
                 Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
                 OctopusUseBundledTooling = "False"
             }
-            worker_pool = "hosted-ubuntu"
+            worker_pool_variable = "ExecutionContainer.Linux.WorkerPool"
 
             container {
                 feed = "docker-hub"
-                image = "octopusdeploy/worker-tools:6.6.3-ubuntu.22.04"
+                image = "#{ExecutionContainer.Linux.DefaultImage}"
             }
 
             git_dependencies {
