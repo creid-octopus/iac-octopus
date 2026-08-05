@@ -45,7 +45,7 @@ data "octopusdeploy_environments" "k8s_agent" {
 resource "octopusdeploy_kubernetes_agent_deployment_target" "k8s_agent" {
   name         = local.agent_name
   space_id     = var.octopus_space_id
-  environments = flatten([for name, env in data.octopusdeploy_environments.k8s_agent : keys(env.environments) if length(env.environments) > 0])
+  environments = flatten([for name, env in data.octopusdeploy_environments.k8s_agent : [for e in env.environments : e.id] if length(env.environments) > 0])
   roles        = var.kubernetes_agent_roles
 
   thumbprint = octopusdeploy_tentacle_certificate.k8s_agent.thumbprint
