@@ -17,11 +17,11 @@ variable "Project.Terraform.CoreTarget" {
 }
 
 variable "Terraform.Environment.Name" {
-    value "[\"development\",\"test\"]" {
+    value "\"development\",\"test\"" {
         environment = ["meta-nonproduction"]
     }
 
-    value "[\"production\"]" {
+    value "\"production\"" {
         environment = ["production"]
     }
 }
