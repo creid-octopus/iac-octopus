@@ -15,3 +15,13 @@ variable "Project.Terraform.CoreTarget" {
         description = "Used to provide `-target` parameters to core resource creation"
     }
 }
+
+variable "Terraform.Environment.Name" {
+    value "[\"development\",\"test\"]" {
+        environment = ["meta-nonproduction"]
+    }
+
+    value "[\"production\"]" {
+        environment = ["production"]
+    }
+}
