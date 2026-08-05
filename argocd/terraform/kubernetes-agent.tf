@@ -121,4 +121,13 @@ resource "helm_release" "kubernetes_agent" {
     name  = "agent.deploymentTarget.initial.tags"
     value = var.kubernetes_agent_roles
   }
+
+  set {
+    name  = "scriptPods.deploymentTarget.image.repository"
+    value = "ghcr.io/creid-octopus/demo-kubernetes-krane-toolbox"
+  }
+  set {
+    name  = "scriptPods.deploymentTarget.image.tag"
+    value = "1"
+  }
 }
