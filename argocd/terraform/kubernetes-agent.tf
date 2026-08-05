@@ -68,7 +68,7 @@ resource "helm_release" "kubernetes_agent" {
   chart      = "octopusdeploy/kubernetes-agent"
   version    = var.kubernetes_agent_chart_version
   namespace  = kubernetes_namespace.k8s_agent.metadata[0].name
-  atomic     = true
+  atomic     = false
   timeout    = 300
   wait       = true
 
@@ -122,6 +122,7 @@ resource "helm_release" "kubernetes_agent" {
     value = var.kubernetes_agent_roles
   }
 
+  # Custom tooling image for Kubernetes agent deployment target (replace default Octopus tooling)
   set {
     name  = "scriptPods.deploymentTarget.image.repository"
     value = "ghcr.io/creid-octopus/demo-kubernetes-krane-toolbox"
@@ -129,5 +130,9 @@ resource "helm_release" "kubernetes_agent" {
   set {
     name  = "scriptPods.deploymentTarget.image.tag"
     value = "1"
+  }
+  set {
+    name  = "scriptPods.deploymentTarget.image.pullPolicy"
+    value = "Always"
   }
 }
