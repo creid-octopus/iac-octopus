@@ -98,13 +98,6 @@ process {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
             }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
-            }
         }
     }
 
@@ -138,13 +131,6 @@ process {
             container {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
-            }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
             }
         }
     }
@@ -197,13 +183,6 @@ process {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
             }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
-            }
         }
     }
 
@@ -236,13 +215,6 @@ process {
             container {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
-            }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
             }
         }
     }
@@ -294,13 +266,6 @@ process {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
             }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
-            }
         }
     }
 
@@ -329,13 +294,6 @@ process {
             container {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
-            }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
             }
         }
     }
