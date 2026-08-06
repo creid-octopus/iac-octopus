@@ -58,11 +58,7 @@ process {
     }
 
     step "approve-terraform-plan" {
-        condition = "Variable"
         name = "Approve Main Cluster Terraform Plan"
-        properties = {
-            Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Action[Terraform Plan - Main Cluster].Output.TerraformPlanDetailedExitCode != '2'}#{/unless}"
-        }
 
         action "approve-main-cluster-terraform-plan" {
             action_type = "Octopus.Manual"
@@ -161,11 +157,7 @@ process {
     }
 
     step "approve-argo-cd-cluster-terraform-plan" {
-        condition = "Variable"
         name = "Approve Argo CD Cluster Terraform Plan"
-        properties = {
-            Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Action[Terraform Plan - Argo CD].Output.TerraformPlanDetailedExitCode != '2'}#{/unless}"
-        }
 
         action {
             action_type = "Octopus.Manual"
