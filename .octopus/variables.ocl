@@ -11,14 +11,8 @@ variable "Project.Terraform.ArgoTarget" {
 }
 
 variable "Project.Terraform.CoreTarget" {
-    value "-target=module.eks" {
-        description = "Used to provide `-target` parameters to core resource creation. For AKS: -target=azurerm_kubernetes_cluster.main. For EKS: -target=module.eks"
-    }
-}
-
-variable "Project.Terraform.CloudProvider" {
-    value "eks" {
-        description = "Cloud provider for the Terraform tier — aks or eks. Controls which backend/provider blocks are active."
+    value "-target=azurerm_kubernetes_cluster.main" {
+        description = "Used to provide `-target` parameters to core resource creation"
     }
 }
 
@@ -30,4 +24,26 @@ variable "Terraform.Environment.Name" {
     value "production" {
         environment = ["meta-production"]
     }
+}
+
+variable "Project.AWSAccount" {
+    type = "AmazonWebServicesAccount"
+
+    value "aws-account" {}
+}
+
+variable "Project.Terraform.CoreTarget" {
+    value "-target=azurerm_kubernetes_cluster.main" {
+        description = "Used to provide `-target` parameters to core resource creation"
+        tenant_tag = ["CloudBase/Azure"]
+    }
+
+    value "-target=module.eks" {
+        description = ""
+        tenant_tag = ["CloudBase/AWS"]
+    }
+}
+
+variable "Project.AWSRegion" {
+    value "us-east-2" {}
 }
