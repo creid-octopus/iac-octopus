@@ -46,7 +46,7 @@ variable "Project.Terraform.CoreTarget" {
 
 variable "Project.Terraform.CloudProvider" {
     value "aks" {
-        "Used to drive per-backend configuration for the Terraform destroy runbook"
+        description = "Used to drive per-backend configuration for the Terraform destroy runbook"
         tenant_tag = ["CloudBase/Azure"]
     }
 
