@@ -80,7 +80,7 @@ process {
                 Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
                 Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
                 Octopus.Action.Script.ScriptSource = "GitRepository"
-                Octopus.Action.Terraform.AdditionalActionParams = "-destroy"
+                Octopus.Action.Terraform.AdditionalActionParams = "-destroy -target=#{Project.Terraform.CoreTarget}"
                 Octopus.Action.Terraform.AllowPluginDownloads = "True"
                 Octopus.Action.Terraform.AzureAccount = "True"
                 Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_environments\":\"#{Terraform.Environment.Name}\",\"TF_VAR_octopus_grpc_url\":\"creid.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"#{Octopus.Space.Name}\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
