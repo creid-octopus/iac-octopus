@@ -20,7 +20,6 @@ process {
 
         action "terraform-plan-destroy" {
             action_type = "Octopus.TerraformPlan"
-            is_disabled = false
             properties = {
                 Octopus.Action.Aws.Region = "#{Project.AWSRegion}"
                 Octopus.Action.AwsAccount.UseInstanceRole = "False"
@@ -55,7 +54,6 @@ process {
 
         action "approve-terraform-destroy-plan" {
             action_type = "Octopus.Manual"
-            is_disabled = true
             properties = {
                 Octopus.Action.Manual.BlockConcurrentDeployments = "False"
                 Octopus.Action.Manual.Instructions = <<-EOT
@@ -63,6 +61,7 @@ process {
                     #{Octopus.Action[Terraform Plan - Destroy].Output.TerraformPlanOutput}
                     ```
                     EOT
+                Octopus.Action.RunOnServer = "false"
             }
         }
     }
