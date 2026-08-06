@@ -86,6 +86,9 @@ process {
         action "terraform-apply-main-cluster" {
             action_type = "Octopus.TerraformApply"
             properties = {
+                Octopus.Action.Aws.Region = "#{Project.AWSRegion}"
+                Octopus.Action.AwsAccount.UseInstanceRole = "False"
+                Octopus.Action.AwsAccount.Variable = "Project.AWSAccount"
                 Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
                 Octopus.Action.GitRepository.Source = "External"
                 Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
@@ -96,7 +99,7 @@ process {
                 Octopus.Action.Terraform.AzureAccount = "True"
                 Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_environments\":\"#{Terraform.Environment.Name}\",\"TF_VAR_octopus_grpc_url\":\"creid.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"Default\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
                 Octopus.Action.Terraform.GoogleCloudAccount = "False"
-                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.ManagedAccount = "AWS"
                 Octopus.Action.Terraform.PlanJsonOutput = "False"
                 Octopus.Action.Terraform.RunAutomaticFileSubstitution = "True"
                 Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
@@ -125,6 +128,9 @@ process {
             action_type = "Octopus.TerraformPlan"
             is_disabled = true
             properties = {
+                Octopus.Action.Aws.Region = "#{Project.AWSRegion}"
+                Octopus.Action.AwsAccount.UseInstanceRole = "False"
+                Octopus.Action.AwsAccount.Variable = "Project.AWSAccount"
                 Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
                 Octopus.Action.GitRepository.Source = "External"
                 Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
@@ -135,7 +141,7 @@ process {
                 Octopus.Action.Terraform.AzureAccount = "True"
                 Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_environments\":\"#{Terraform.Environment.Name}\",\"TF_VAR_octopus_grpc_url\":\"creid.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"#{Octopus.Space.Name}\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
                 Octopus.Action.Terraform.GoogleCloudAccount = "False"
-                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.ManagedAccount = "AWS"
                 Octopus.Action.Terraform.PlanJsonOutput = "False"
                 Octopus.Action.Terraform.RunAutomaticFileSubstitution = "True"
                 Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
@@ -185,6 +191,9 @@ process {
         action {
             action_type = "Octopus.TerraformApply"
             properties = {
+                Octopus.Action.Aws.Region = "#{Project.AWSRegion}"
+                Octopus.Action.AwsAccount.UseInstanceRole = "False"
+                Octopus.Action.AwsAccount.Variable = "Project.AWSAccount"
                 Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
                 Octopus.Action.GitRepository.Source = "External"
                 Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
@@ -195,7 +204,7 @@ process {
                 Octopus.Action.Terraform.AzureAccount = "True"
                 Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_environments\":\"#{Terraform.Environment.Name}\",\"TF_VAR_octopus_grpc_url\":\"creid.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"Default\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
                 Octopus.Action.Terraform.GoogleCloudAccount = "False"
-                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.ManagedAccount = "AWS"
                 Octopus.Action.Terraform.PlanJsonOutput = "False"
                 Octopus.Action.Terraform.RunAutomaticFileSubstitution = "True"
                 Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
@@ -223,6 +232,9 @@ process {
         action {
             action_type = "Octopus.TerraformPlan"
             properties = {
+                Octopus.Action.Aws.Region = "#{Project.AWSRegion}"
+                Octopus.Action.AwsAccount.UseInstanceRole = "False"
+                Octopus.Action.AwsAccount.Variable = "Project.AWSAccount"
                 Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
                 Octopus.Action.GitRepository.Source = "External"
                 Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
@@ -232,7 +244,7 @@ process {
                 Octopus.Action.Terraform.AzureAccount = "True"
                 Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_environments\":\"#{Terraform.Environment.Name}\",\"TF_VAR_octopus_grpc_url\":\"creid.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"Default\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
                 Octopus.Action.Terraform.GoogleCloudAccount = "False"
-                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.ManagedAccount = "AWS"
                 Octopus.Action.Terraform.PlanJsonOutput = "False"
                 Octopus.Action.Terraform.RunAutomaticFileSubstitution = "True"
                 Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
@@ -277,6 +289,9 @@ process {
         action {
             action_type = "Octopus.TerraformApply"
             properties = {
+                Octopus.Action.Aws.Region = "#{Project.AWSRegion}"
+                Octopus.Action.AwsAccount.UseInstanceRole = "False"
+                Octopus.Action.AwsAccount.Variable = "Project.AWSAccount"
                 Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
                 Octopus.Action.GitRepository.Source = "External"
                 Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
@@ -286,7 +301,7 @@ process {
                 Octopus.Action.Terraform.AzureAccount = "True"
                 Octopus.Action.Terraform.EnvVariables = "{\"TF_VAR_argocd_admin_password_hash\":\"#{Project.ArgoCD.AdminPasswordHash}\",\"TF_VAR_argocd_insecure\":\"true\",\"TF_VAR_octopus_environments\":\"#{Terraform.Environment.Name}\",\"TF_VAR_octopus_grpc_url\":\"creid.octopus.app:8443\",\"TF_VAR_octopus_space_name\":\"Default\",\"TF_VAR_octopus_api_key\":\"#{OctopusApi.ApiKey}\",\"TF_VAR_argocd_admin_password\":\"#{Project.ArgoCD.AdminPassword}\",\"TF_VAR_environment\":\"#{Octopus.Environment.Name | ToLower}\"}"
                 Octopus.Action.Terraform.GoogleCloudAccount = "False"
-                Octopus.Action.Terraform.ManagedAccount = "None"
+                Octopus.Action.Terraform.ManagedAccount = "AWS"
                 Octopus.Action.Terraform.PlanJsonOutput = "False"
                 Octopus.Action.Terraform.RunAutomaticFileSubstitution = "True"
                 Octopus.Action.Terraform.TemplateDirectory = "argocd/terraform/"
@@ -314,6 +329,9 @@ process {
         action {
             action_type = "Octopus.AzurePowerShell"
             properties = {
+                Octopus.Action.Aws.Region = "#{Project.AWSRegion}"
+                Octopus.Action.AwsAccount.UseInstanceRole = "False"
+                Octopus.Action.AwsAccount.Variable = "Project.AWSAccount"
                 Octopus.Action.Azure.AccountId = "#{Project.AzureAccount}"
                 Octopus.Action.EnabledFeatures = "Octopus.Features.SubstituteInFiles"
                 Octopus.Action.GitRepository.Source = "External"
