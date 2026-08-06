@@ -37,3 +37,7 @@ variable "Project.Terraform.CoreTarget" {
         tenant_tag = ["CloudBase/AWS"]
     }
 }
+
+variable "Project.AWSRegion" {
+    value "us-east-2" {}
+}
