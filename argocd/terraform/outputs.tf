@@ -1,32 +1,27 @@
-output "resource_group_name" {
-  description = "Resource group containing the AKS cluster"
-  value       = azurerm_resource_group.main.name
-}
-
 output "cluster_name" {
-  description = "AKS cluster name — use with 'az aks get-credentials'"
-  value       = azurerm_kubernetes_cluster.main.name
+  description = "EKS cluster name — use with 'aws eks update-kubeconfig'"
+  value       = module.eks.cluster_name
 }
 
 output "kube_config_raw" {
-  description = "Raw kubeconfig — use 'az aks get-credentials' instead for local use"
-  value       = azurerm_kubernetes_cluster.main.kube_config_raw
+  description = "In-memory kubeconfig — use 'aws eks update-kubeconfig --name <cluster>' for local use"
+  value       = local.eks_kubeconfig
   sensitive   = true
 }
 
 output "get_credentials_command" {
   description = "Run this after apply to configure kubectl and Headlamp"
-  value       = "az aks get-credentials --resource-group ${azurerm_resource_group.main.name} --name ${azurerm_kubernetes_cluster.main.name} --context argocd-demo-${var.environment}"
+  value       = "aws eks update-kubeconfig --name ${module.eks.cluster_name} --region ${var.aws_region} --alias argocd-demo-${var.environment}"
 }
 
-output "argocd_server_ip" {
-  description = "ArgoCD LoadBalancer IP — computed during apply"
-  value       = local.argocd_external_ip
+output "argocd_server_url" {
+  description = "ArgoCD LoadBalancer URL — computed during apply"
+  value       = local.argocd_external_url
 }
 
 output "argocd_login_command" {
-  description = "ArgoCD CLI login command — fill in the IP from get_argocd_ip"
-  value       = "argocd login <EXTERNAL-IP> --username admin --insecure"
+  description = "ArgoCD CLI login command — fill in the URL from argocd_server_url"
+  value       = "argocd login <EXTERNAL-URL> --username admin --insecure"
 }
 
 output "get_gateway_token" {
@@ -49,7 +44,7 @@ output "get_k8s_agent_logs" {
   value       = "kubectl logs -l app.kubernetes.io/name=kubernetes-agent -n ${var.kubernetes_agent_namespace} --context argocd-demo-${var.environment} -f"
 }
 
-output "get_grafana_ip" {
-  description = "Grafana LoadBalancer IP — available after ArgoCD syncs kube-prometheus (may take a few minutes post-apply)"
-  value       = "kubectl get svc kube-prometheus-grafana -n monitoring --context argocd-demo-${var.environment} -o jsonpath='{.status.loadBalancer.ingress[0].ip}'"
+output "get_grafana_url" {
+  description = "Grafana LoadBalancer URL — available after ArgoCD syncs kube-prometheus (may take a few minutes post-apply)"
+  value       = "kubectl get svc kube-prometheus-grafana -n monitoring --context argocd-demo-${var.environment} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'"
 }

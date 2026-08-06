@@ -1,66 +1,59 @@
 locals {
   # Environment-suffixed resource names — all resources include the environment
   # so multiple environments (development, test, production) can coexist independently.
-  env            = var.environment
-  cluster_name   = "${var.cluster_name}-${local.env}"
-  resource_group = "${var.resource_group_name}-${local.env}"
-}
+  env          = var.environment
+  cluster_name = "${var.cluster_name}-${local.env}"
 
-resource "azurerm_resource_group" "main" {
-  name     = local.resource_group
-  location = var.location
+  # ─── Cloud-agnostic cluster reference ────────────────────────────────────
+  # EKS tier uses the module output; AKS tier uses the azurerm resource.
+  # This variable is referenced by providers.tf, argocd.tf, and gateway.tf.
+  # For EKS: cluster_endpoint, cluster_certificate_authority_data come from module.eks
+  # For AKS: they come from azurerm_kubernetes_cluster.main.kube_config[0]
+  #
+  # NOTE: The actual cluster reference is kept as separate references in each
+  # file rather than a single local because the EKS module and Azure resource
+  # have different output shapes. This keeps each tier's config self-contained.
 
-  tags = {
-    environment  = local.env
-    cluster_name = local.cluster_name
-    project      = "argocd-demo"
-    managed_by   = "terraform"
-  }
-}
-
-resource "azurerm_kubernetes_cluster" "main" {
-  name                = local.cluster_name
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  dns_prefix          = local.cluster_name
-  kubernetes_version  = var.kubernetes_version
-
-  default_node_pool {
-    name    = "system"
-    vm_size = var.node_size
-
-    # Autoscaler — scales down to 1 node when idle, up to 2 under load
-    auto_scaling_enabled = true
-    min_count            = var.node_min_count
-    max_count            = var.node_max_count
-
-    os_disk_size_gb = 30
-
-    # Required when changing node pool VM size in-place
-    temporary_name_for_rotation = "systemtmp"
-
-    # Declare AKS defaults explicitly to prevent perpetual plan diff
-    upgrade_settings {
-      drain_timeout_in_minutes      = 0
-      max_surge                     = "10%"
-      node_soak_duration_in_minutes = 0
-    }
-  }
-
-  # System-assigned managed identity — no service principal or credential rotation needed
-  identity {
-    type = "SystemAssigned"
-  }
-
-  network_profile {
-    # kubenet: simpler networking, no VNet required — appropriate for demos
-    network_plugin    = "kubenet"
-    load_balancer_sku = "standard"
-  }
-
-  tags = {
-    environment = var.environment
-    project     = "argocd-demo"
-    managed_by  = "terraform"
-  }
+  # In-memory kubeconfig generated from EKS module output.
+  # Used by external data sources (argocd.tf) and local-exec scripts (gateway.tf)
+  # that need a kubeconfig file but shouldn't require aws eks update-kubeconfig.
+  eks_kubeconfig = jsonencode({
+    apiVersion = "v1"
+    kind       = "Config"
+    clusters = [
+      {
+        name = module.eks.cluster_name
+        cluster = {
+          server                   = module.eks.cluster_endpoint
+          certificate-authority-data = module.eks.cluster_certificate_authority_data
+        }
+      }
+    ]
+    contexts = [
+      {
+        name = module.eks.cluster_name
+        context = {
+          cluster = module.eks.cluster_name
+          user    = module.eks.cluster_name
+        }
+      }
+    ]
+    current-context = module.eks.cluster_name
+    users = [
+      {
+        name = module.eks.cluster_name
+        user = {
+          exec = {
+            apiVersion = "client.authentication.k8s.io/v1beta1"
+            command    = "aws"
+            args = [
+              "eks", "get-token",
+              "--cluster-name", module.eks.cluster_name,
+              "--region", var.aws_region
+            ]
+          }
+        }
+      }
+    ]
+  })
 }

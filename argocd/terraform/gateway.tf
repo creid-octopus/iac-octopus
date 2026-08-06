@@ -10,7 +10,7 @@ resource "kubernetes_namespace" "gateway" {
   metadata {
     name = var.gateway_namespace
   }
-  depends_on = [azurerm_kubernetes_cluster.main]
+  depends_on = [module.eks]
 }
 
 # Octopus API key stored as a Kubernetes secret — never passed as a plain Helm value
@@ -29,7 +29,7 @@ resource "kubernetes_secret" "octopus_api_key" {
 # in a Kubernetes secret for the gateway to mount. Runs locally using kubectl + argocd CLI.
 #
 # Prerequisites on the machine running terraform apply:
-#   - kubectl (with argocd-demo context configured via az aks get-credentials)
+#   - kubectl (configured via aws eks update-kubeconfig)
 #   - argocd CLI (brew install argocd)
 resource "null_resource" "argocd_token" {
   depends_on = [
@@ -44,9 +44,36 @@ resource "null_resource" "argocd_token" {
   }
 
   provisioner "local-exec" {
-    # Kubeconfig is passed directly from TF state — no local 'az aks get-credentials' required.
+    # Kubeconfig is generated from EKS module output — no local 'aws eks update-kubeconfig' required.
     environment = {
-      KUBECONFIG_CONTENT = azurerm_kubernetes_cluster.main.kube_config_raw
+      KUBECONFIG_CONTENT = <<-KUBECONFIG
+        apiVersion: v1
+        kind: Config
+        clusters:
+        - cluster:
+            server: ${module.eks.cluster_endpoint}
+            certificate-authority-data: ${module.eks.cluster_certificate_authority_data}
+          name: ${module.eks.cluster_name}
+        contexts:
+        - context:
+            cluster: ${module.eks.cluster_name}
+            user: ${module.eks.cluster_name}
+          name: ${module.eks.cluster_name}
+        current-context: ${module.eks.cluster_name}
+        users:
+        - name: ${module.eks.cluster_name}
+          user:
+            exec:
+              apiVersion: client.authentication.k8s.io/v1beta1
+              command: aws
+              args:
+              - eks
+              - get-token
+              - --cluster-name
+              - ${module.eks.cluster_name}
+              - --region
+              - ${var.aws_region}
+        KUBECONFIG
     }
     interpreter = ["bash", "-c"]
     command     = <<-EOT

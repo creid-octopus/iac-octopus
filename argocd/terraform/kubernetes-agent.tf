@@ -1,5 +1,5 @@
 # ── Octopus Kubernetes Agent ─────────────────────────────────────────────────
-# Registers the AKS cluster as a traditional Kubernetes deployment target in
+# Registers the Kubernetes cluster as a traditional Kubernetes deployment target in
 # Octopus using the polling Tentacle agent. Complements the ArgoCD gateway
 # (GitOps sync visibility) by enabling Octopus to execute Kubernetes steps
 # directly on the cluster.
@@ -12,7 +12,7 @@ locals {
   # Derive the polling comms address from the API URL.
   # https://creid.octopus.app -> https://polling.creid.octopus.app
   octopus_polling_url = replace(var.octopus_api_url, "https://", "https://polling.")
-  # Environment-suffixed agent name in Octopus (e.g. creid-aks-meta-nonproduction)
+  # Environment-suffixed agent name in Octopus (e.g. creid-eks-meta-nonproduction)
   agent_name          = "${var.kubernetes_agent_name}-${var.environment}"
   # Map environment slugs to Octopus environment display names (case-sensitive lookup)
   # REVIEW/SIMPLIFY LATER: This env-slug-to-name mapping is fragile. The intent is to look up Octopus
@@ -56,7 +56,7 @@ resource "kubernetes_namespace" "k8s_agent" {
   metadata {
     name = var.kubernetes_agent_namespace
   }
-  depends_on = [azurerm_kubernetes_cluster.main]
+  depends_on = [module.eks]
 }
 
 # Install the Kubernetes agent via Helm.

@@ -11,9 +11,9 @@ variable "location" {
 }
 
 variable "cluster_name" {
-  description = "Base name for the AKS cluster. The environment is appended automatically: creid-aks-meta-nonproduction."
+  description = "Base name for the Kubernetes cluster. The environment is appended automatically: creid-aks-meta-nonproduction (AKS) or creid-eks-meta-nonproduction (EKS)."
   type        = string
-  default     = "creid-aks"
+  default     = "creid-eks"
 }
 
 variable "kubernetes_version" {
@@ -23,13 +23,13 @@ variable "kubernetes_version" {
 }
 
 variable "node_size" {
-  description = "VM size for AKS nodes"
+  description = "VM/Instance size for cluster nodes. AKS: Standard_B2s. EKS: t3.small or t3.medium."
   type        = string
-  default     = "Standard_B2s"
+  default     = "t3.medium"
 }
 
 variable "node_min_count" {
-  description = "Minimum node count for autoscaler. Set to 2 for demo clusters — a single Standard_B2s can't fit ArgoCD + kube-prometheus-stack + Octopus agents without CPU pressure."
+  description = "Minimum node count for autoscaler. Set to 2 for demo clusters — a single node can't fit ArgoCD + kube-prometheus-stack + Octopus agents without CPU pressure."
   type        = number
   default     = 2
 }
@@ -137,9 +137,9 @@ variable "octopus_space_name" {
 # ─── Kubernetes Agent ───────────────────────────────────────────────────────
 
 variable "kubernetes_agent_name" {
-  description = "Name for the Kubernetes agent deployment target in Octopus. Also used as the Helm release name — must be unique per cluster."
+  description = "Name for the Kubernetes agent deployment target in Octopus. Also used as the Helm release name — must be unique per cluster. EKS default: creid-eks."
   type        = string
-  default     = "creid-aks"
+  default     = "creid-eks"
 }
 
 variable "kubernetes_agent_namespace" {
@@ -159,3 +159,24 @@ variable "kubernetes_agent_chart_version" {
   type        = string
   default     = "3.*.*"
 }
+
+# ─── EKS (AWS) ──────────────────────────────────────────────────────────────
+
+variable "vpc_cidr" {
+  description = "CIDR block for the EKS VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "availability_zones" {
+  description = "Availability zones for the EKS subnets. Must match the AWS region."
+  type        = list(string)
+  default     = ["us-east-2a", "us-east-2b", "us-east-2c"]
+}
+
+variable "aws_region" {
+  description = "AWS region for the EKS cluster. Also used by the aws provider and aws eks get-token commands."
+  type        = string
+  default     = "us-east-2"
+}
+

@@ -11,8 +11,14 @@ variable "Project.Terraform.ArgoTarget" {
 }
 
 variable "Project.Terraform.CoreTarget" {
-    value "-target=azurerm_kubernetes_cluster.main" {
-        description = "Used to provide `-target` parameters to core resource creation"
+    value "-target=module.eks" {
+        description = "Used to provide `-target` parameters to core resource creation. For AKS: -target=azurerm_kubernetes_cluster.main. For EKS: -target=module.eks"
+    }
+}
+
+variable "Project.Terraform.CloudProvider" {
+    value "eks" {
+        description = "Cloud provider for the Terraform tier — aks or eks. Controls which backend/provider blocks are active."
     }
 }
 

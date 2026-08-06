@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
     helm = {
       source  = "hashicorp/helm"
       version = "~> 2.0"
@@ -32,21 +36,42 @@ terraform {
     }
   }
 
+  # Backend: AzureRM blob storage — shared across both AKS and EKS tiers.
+  # The same storage account holds state for any cloud provider.
+  # Octopus substitutes #{...} in files before running terraform init,
+  # so this hydrates to e.g. "creid-argocd-demo-development.tfstate" at runtime.
+  # Local runs will fail until this is replaced manually or via TF_CLI_ARGS_init.
   backend "azurerm" {
     resource_group_name  = "terraform-state"
     storage_account_name = "octotfstate"
     container_name       = "terraform-state"
-    # Octopus substitutes #{...} in files before running terraform init,
-    # so this hydrates to e.g. "creid-argocd-demo-development.tfstate" at runtime.
-    # Local runs will fail until this is replaced manually or via TF_CLI_ARGS_init.
-    key = "creid-argocd-demo-#{Octopus.Environment.Name | ToLower}.tfstate"
+    key                  = "creid-argocd-demo-#{Octopus.Environment.Name | ToLower}.tfstate"
   }
 }
 
-provider "azurerm" {
-  features {}
-  # Auth: Azure CLI (az login) — no credentials in code
+# ─── Azure Provider (AKS tier — disabled by default for EKS) ─────────────────
+# provider "azurerm" {
+#   features {}
+#   # Auth: Azure CLI (az login) — no credentials in code
+# }
+
+# ─── AWS Provider (EKS tier) ─────────────────────────────────────────────
+# Auth: AWS CLI (aws configure) or IAM role on the worker.
+# No access keys in code — uses the worker's IAM execution role.
+provider "aws" {
+  region = var.aws_region
+
+  default_tags {
+    tags = {
+      environment  = local.env
+      cluster_name = local.cluster_name
+      project      = "argocd-demo"
+      managed_by   = "terraform"
+    }
+  }
 }
+
+# ─── Octopus Deploy ────────────────────────────────────────────────────────
 
 provider "octopusdeploy" {
   address  = var.octopus_api_url
@@ -54,20 +79,30 @@ provider "octopusdeploy" {
   space_id = var.octopus_space_id
 }
 
-# Both helm and kubernetes providers are configured to connect directly
-# to the AKS cluster via its kube_config output — no local kubeconfig required.
-provider "helm" {
-  kubernetes {
-    host                   = azurerm_kubernetes_cluster.main.kube_config[0].host
-    client_certificate     = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_certificate)
-    client_key             = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_key)
-    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].cluster_ca_certificate)
+# ─── Kubernetes Provider ───────────────────────────────────────────────────
+# EKS-style auth: uses aws eks get-token via exec plugin.
+# Works with both EKS module output and manual kubeconfig.
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.aws_region]
   }
 }
 
-provider "kubernetes" {
-  host                   = azurerm_kubernetes_cluster.main.kube_config[0].host
-  client_certificate     = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_certificate)
-  client_key             = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_key)
-  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].cluster_ca_certificate)
+# ─── Helm Provider ─────────────────────────────────────────────────────────
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.aws_region]
+    }
+  }
 }

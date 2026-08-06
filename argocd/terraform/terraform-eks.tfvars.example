@@ -1,0 +1,54 @@
+# Copy to terraform.tfvars (gitignored) and fill in values.
+# Most defaults in variables.tf are fine — only override what you need.
+#
+# Per-environment usage:
+#   Each environment (development, test, production) gets its own EKS cluster
+#   and its own Terraform state file (Azure blob storage — same account as AKS).
+#     cluster_name + environment → creid-eks-meta-nonproduction
+#     gateway_name + environment → argocd-demo-meta-nonproduction
+#     kubernetes_agent_name + environment → creid-eks-meta-nonproduction
+#
+#   Set TF_VAR_environment and TF_CLI_ARGS_init in .envrc (see .envrc.example).
+#   You do NOT need to set 'environment' here if it's set via TF_VAR_environment.
+
+# ─── EKS / AWS ──────────────────────────────────────────────────────────────
+cluster_name   = "creid-eks"
+node_size      = "t3.medium"
+node_min_count = 2
+node_max_count = 2
+aws_region     = "us-east-2"
+# kubernetes_version = "1.31"  # Uncomment to pin; leave unset for latest default
+
+# environment is required — set via TF_VAR_environment in .envrc (no default)
+
+# ─── ArgoCD ────────────────────────────────────────────────────────────────
+# bcrypt hash of your ArgoCD password — generate with:
+# python3 -c "import bcrypt; print(bcrypt.hashpw(b'yourpassword', bcrypt.gensalt(10)).decode())"
+argocd_admin_password_hash = "$2a$10$REPLACE_WITH_YOUR_HASH"
+argocd_admin_password      = "REPLACE_WITH_PLAINTEXT_PASSWORD"
+
+# ArgoCD public URL — computed automatically from LoadBalancer URL during apply.
+# Only set this to override (e.g. when using a custom DNS name).
+# argocd_web_ui_url = "https://argocd.yourdomain.com"
+argocd_insecure = true
+
+# ─── Octopus Deploy ─────────────────────────────────────────────────────────
+octopus_api_url      = "https://creid.octopus.app"
+octopus_grpc_url     = "creid.octopus.app:8443"  # 8443 = gRPC server; 443 = REST API (wrong port)
+octopus_api_key      = "API-REPLACE_WITH_YOUR_KEY"
+octopus_space_id     = "Spaces-1"
+octopus_environments = "development,test,production"
+
+# ─── Gateway ─────────────────────────────────────────────────────────────────
+gateway_name          = "argocd-demo"
+gateway_chart_version = "1.23.0"  # check https://hub.docker.com/r/octopusdeploy/octopus-argocd-gateway-chart/tags
+
+# ─── Kubernetes Agent ─────────────────────────────────────────────────────────
+# Space name is needed separately — the Helm chart takes the name, not the ID.
+octopus_space_name = "CReid - Sandbox"
+
+# Other agent defaults are fine from variables.tf — override only if needed:
+# kubernetes_agent_name          = "creid-eks"
+# kubernetes_agent_namespace     = "octopus-k8s-agent"
+# kubernetes_agent_roles         = ["k8s-agent"]
+# kubernetes_agent_chart_version = "3.*.*"  # check https://hub.docker.com/r/octopusdeploy/kubernetes-agent/tags
