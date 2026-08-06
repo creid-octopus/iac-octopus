@@ -26,7 +26,7 @@ process {
                 Octopus.Action.AwsAccount.UseInstanceRole = "False"
                 Octopus.Action.AwsAccount.Variable = "Project.AWSAccount"
                 Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
-                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GitRepository.Source = "Project"
                 Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
                 Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
                 Octopus.Action.Script.ScriptSource = "GitRepository"
@@ -46,13 +46,6 @@ process {
             container {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
-            }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
             }
         }
     }
