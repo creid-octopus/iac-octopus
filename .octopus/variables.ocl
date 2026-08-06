@@ -44,6 +44,18 @@ variable "Project.Terraform.CoreTarget" {
     }
 }
 
+variable "Project.Terraform.CloudProvider" {
+    value "aks" {
+        "Used to drive per-backend configuration for the Terraform destroy runbook"
+        tenant_tag = ["CloudBase/Azure"]
+    }
+
+    value "eks" {
+        description = "Used to drive per-backend configuration for the Terraform destroy runbook"
+        tenant_tag = ["CloudBase/AWS"]
+    }
+}
+
 variable "Project.AWSRegion" {
     value "us-east-2" {}
 }

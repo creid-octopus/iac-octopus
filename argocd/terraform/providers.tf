@@ -39,13 +39,14 @@ terraform {
   # Backend: AzureRM blob storage — shared across both AKS and EKS tiers.
   # The same storage account holds state for any cloud provider.
   # Octopus substitutes #{...} in files before running terraform init,
-  # so this hydrates to e.g. "creid-argocd-demo-development.tfstate" at runtime.
+  # so this hydrates to e.g. "creid-argocd-demo-development-aks.tfstate" or
+  # "creid-argocd-demo-development-eks.tfstate" at runtime.
   # Local runs will fail until this is replaced manually or via TF_CLI_ARGS_init.
   backend "azurerm" {
     resource_group_name  = "terraform-state"
     storage_account_name = "octotfstate"
     container_name       = "terraform-state"
-    key                  = "creid-argocd-demo-#{Octopus.Environment.Name | ToLower}.tfstate"
+    key                  = "creid-argocd-demo-#{Octopus.Environment.Name | ToLower}-#{Project.Terraform.CloudProvider}.tfstate"
   }
 }
 
