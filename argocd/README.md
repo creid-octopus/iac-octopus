@@ -1,12 +1,14 @@
 # ArgoCD Demo Environment
 
-GitOps demo environment: AKS cluster with ArgoCD, Octopus Deploy integration, and sample applications demonstrating environment-per-folder promotion workflows.
+GitOps demo environment: EKS/AKS cluster with ArgoCD, Octopus Deploy integration, and sample applications demonstrating environment-per-folder promotion workflows.
+
+**Cloud providers:** This repo supports both AWS (EKS) and Azure (AKS). Use `terraform-eks.tfvars.example` for EKS setup, `terraform.tfvars.example` for AKS setup. The same ArgoCD + Octopus integration layer works identically on either cloud.
 
 ## Phase Status
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| 1 | AKS cluster via Terraform | ✅ Complete |
+| 1 | EKS/AKS cluster via Terraform | ✅ Complete |
 | 2 | ArgoCD installation and exposure | ✅ Complete |
 | 3 | Cluster infrastructure via GitOps | ✅ Complete |
 | 4 | Octopus Deploy integration (ArgoCD gateway) | ✅ Complete |
@@ -23,7 +25,8 @@ Everything needed to go from zero to a running environment. The per-phase sectio
 
 | Tool | Install | Notes |
 |------|---------|-------|
-| Azure CLI | `brew install azure-cli` | Run `az login` after |
+| Azure CLI | `brew install azure-cli` | Run `az login` after (AKS only) |
+| AWS CLI | `brew install awscli` | Run `aws configure` after (EKS only) |
 | Terraform ≥ 1.5 | `brew install terraform` | |
 | ArgoCD CLI | `brew install argocd` | Needed for bootstrap |
 | netcat (`nc`) | Pre-installed on macOS | Used by token generation |
@@ -110,10 +113,10 @@ octopus_space_name = "Your Space Name"
 cd argocd/terraform
 terraform init    # downloads all providers
 terraform plan    # review what will be created
-terraform apply   # ~10 min: AKS + ArgoCD + Octopus gateway + K8s agent
+terraform apply   # ~10 min: cluster + ArgoCD + Octopus gateway + K8s agent
 ```
 
-`terraform apply` is fully self-contained — no pre-configured kubectl context or `az aks get-credentials` required.
+`terraform apply` is fully self-contained — no pre-configured kubectl context or cloud CLI required (`aws eks update-kubeconfig` for EKS, `az aks get-credentials` for AKS).
 
 ### Step 6 — Configure local tools
 
@@ -137,11 +140,11 @@ argocd app list
 
 ### What you'll have
 
-- AKS cluster in `centralus` (Standard_B2s, autoscaler min 1 / max 2)
-- ArgoCD at `https://<external-ip>` (self-signed cert — click through the browser warning)
+- EKS cluster in `us-east-2` (t3.medium, autoscaler min 2 / max 2) or AKS in `centralus` (Standard_B2s)
+- ArgoCD at `https://<external-ip-or-url>` (self-signed cert — click through the browser warning)
 - Grafana in `monitoring` namespace (`kubectl port-forward svc/kube-prometheus-grafana 3000:80 -n monitoring`)
 - Octopus ArgoCD Gateway connected to your space
-- Octopus Kubernetes Agent registered as a deployment target (`creid-aks`)
+- Octopus Kubernetes Agent registered as a deployment target (`creid-eks` or `creid-aks`)
 - Demo applications: kustomize (dev + staging), helm, and raw YAML
 
 ### Gotchas
@@ -168,13 +171,13 @@ cd terraform && terraform destroy                  # removes everything; auto-de
 
 ### How Terraform manages the cluster
 
-`terraform apply` is fully self-contained — it does not require a pre-configured local kubectl context or any prior `az aks get-credentials` run. Specifically:
+`terraform apply` is fully self-contained — it does not require a pre-configured local kubectl context or any prior cloud CLI run (`aws eks update-kubeconfig` for EKS, `az aks get-credentials` for AKS). Specifically:
 
-- The **Helm and Kubernetes providers** connect to AKS directly using credentials from the `azurerm_kubernetes_cluster` resource output, not from `~/.kube/config`.
-- **Local-exec scripts** (ArgoCD token generation, LoadBalancer IP polling) receive `kube_config_raw` as an environment variable and write it to a temp kubeconfig file at runtime. No `--context` flags, no local setup required.
-- The **ArgoCD LoadBalancer IP** is computed during apply by polling the Kubernetes service until Azure assigns it. `argocd_web_ui_url` is derived from this automatically — no need to set it manually unless overriding with a DNS name.
+- The **Helm and Kubernetes providers** connect to the cluster directly using credentials from the EKS module output (`cluster_endpoint` + `cluster_certificate_authority_data` + `aws eks get-token` exec auth), not from `~/.kube/config`.
+- **Local-exec scripts** (ArgoCD token generation, LoadBalancer URL polling) receive a generated kubeconfig as an environment variable and write it to a temp kubeconfig file at runtime. No `--context` flags, no local setup required.
+- The **ArgoCD LoadBalancer URL** is computed during apply by polling the Kubernetes service until AWS/Azure assigns it. `argocd_web_ui_url` is derived from this automatically — no need to set it manually unless overriding with a DNS name.
 
-The only inputs Terraform needs from outside are credentials (API keys, passwords) — set via `terraform.tfvars` or `TF_VAR_*` environment variables in `.envrc`.
+The only inputs Terraform needs from outside are credentials (API keys, passwords, cloud auth) — set via `terraform.tfvars` or `TF_VAR_*` environment variables in `.envrc`.
 
 ### What you need for local interaction
 
@@ -186,19 +189,26 @@ direnv reload                     # loads ARGOCD_SERVER into shell
 ./argocd/scripts/bootstrap.sh    # connects ArgoCD to the repo, applies root Application
 ```
 
-`update-env.sh` handles both the kubeconfig merge (`az aks get-credentials`) and capturing the current ArgoCD IP into `.env.local`. Headlamp picks up the `argocd-demo` context automatically.
+`update-env.sh` handles both the kubeconfig merge (`aws eks update-kubeconfig` or `az aks get-credentials`) and capturing the current ArgoCD URL into `.env.local`. Headlamp picks up the `argocd-demo` context automatically.
 
-> **On recreation:** The ArgoCD external IP changes each time — re-run `update-env.sh` and `direnv reload` before running `bootstrap.sh`.
+> **On recreation:** The ArgoCD URL changes each time — re-run `update-env.sh` and `direnv reload` before running `bootstrap.sh`.
 
 ---
 
-## Phase 1 — AKS Foundation
+## Phase 1 — EKS/AKS Foundation
 
 ### What this does
 
-Provisions a resource group and AKS cluster in Azure via Terraform. No applications or tooling are installed in this phase — just the cluster itself.
+Provisions an EKS (AWS) or AKS (Azure) cluster via Terraform. No applications or tooling are installed in this phase — just the cluster itself.
 
-**Decisions baked in:**
+**EKS decisions baked in:**
+- Region: `us-east-2`
+- Node size: `t3.medium` (2 vCPU, 8 GB) — upgrade to `m6i.large` if resource pressure is observed
+- Autoscaler: min 2, max 2 nodes
+- Networking: VPC + private/public subnets + NAT gateway + EKS VPC CNI
+- IAM: EKS managed node group with AmazonEKSWorkerNodePolicy, AmazonEKS_CNI_Policy, AmazonEC2ContainerRegistryReadOnly
+
+**AKS decisions baked in:**
 - Region: `centralus`
 - Node size: `Standard_B2s` (2 vCPU, 4 GB) — upgrade to `Standard_D2s_v3` if resource pressure is observed
 - Autoscaler: min 1, max 2 nodes
@@ -207,9 +217,15 @@ Provisions a resource group and AKS cluster in Azure via Terraform. No applicati
 
 ### Prerequisites
 
+#### For EKS:
+- AWS CLI installed and configured: `aws configure`
+- Terraform >= 1.5 installed
+- Terraform state storage account (shared Azure blob)
+
+#### For AKS:
 - Azure CLI installed and logged in: `az login`
 - Terraform >= 1.5 installed
-- Terraform state storage account details filled in `terraform/providers.tf`
+- Terraform state storage account filled in `terraform/providers.tf`
 
 ### Setup
 
@@ -234,6 +250,13 @@ az storage container create --name <container> --account-name <account>
 
 **2. Create your tfvars file**
 
+For EKS:
+```bash
+cp terraform/terraform-eks.tfvars.example terraform/terraform.tfvars
+# Edit terraform.tfvars with your values
+```
+
+For AKS:
 ```bash
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 # Edit terraform.tfvars if you want to override any defaults
@@ -258,20 +281,9 @@ Verify the cluster is up:
 kubectl get nodes --context argocd-demo
 ```
 
-### Cost management
-
-Stop the cluster when not in use (saves node VM costs; ~5 min to restart):
-
-```bash
-az aks stop --resource-group creid-rg --name creid-aks
-az aks start --resource-group creid-rg --name creid-aks
-```
-
-> **Note:** The static Public IP (added in Phase 2) continues to accrue at ~$0.005/hr even while the cluster is stopped. Release it if leaving idle for an extended period.
-
 ### Teardown
 
-See the [full teardown instructions](#teardown) below.
+See the [full teardown instructions](#teardown) below. For EKS, nodes are automatically terminated when the cluster is deleted — no manual node group cleanup needed. For AKS, the `MC_*` managed resource group is auto-cleaned.
 
 ---
 
@@ -279,7 +291,7 @@ See the [full teardown instructions](#teardown) below.
 
 ### What this does
 
-Installs ArgoCD into the cluster via Helm, managed by Terraform. Exposes it as a LoadBalancer service with ArgoCD's default self-signed TLS — access the UI at `https://<external-ip>` (browser will warn about the self-signed cert; click through).
+Installs ArgoCD into the cluster via Helm, managed by Terraform. Exposes it as a LoadBalancer service with ArgoCD's default self-signed TLS — access the UI at `https://<external-ip-or-url>` (browser will warn about the self-signed cert; click through).
 
 **Decisions baked in:**
 - Helm chart: `argo/argo-cd` from `https://argoproj.github.io/argo-helm`
@@ -313,21 +325,23 @@ terraform apply
 
 This adds: the `argocd` namespace and the ArgoCD Helm release. The LoadBalancer IP takes ~60 seconds after apply for Azure to assign.
 
-### After apply — get the ArgoCD IP and log in
+### After apply — get the ArgoCD URL
 
-The IP is now a proper Terraform output — no kubectl command needed:
+The URL is now a proper Terraform output — no kubectl command needed:
 
 ```bash
-terraform -chdir=argocd/terraform output argocd_server_ip
+terraform -chdir=argocd/terraform output argocd_server_url
 ```
 
 ```bash
 # Open the UI (accept the self-signed cert warning)
-open https://<ip>
+open https://<url>
 
 # Log in via CLI
-argocd login <ip> --username admin --insecure
+argocd login <url> --username admin --insecure
 ```
+
+> **EKS note:** On EKS the LoadBalancer URL is a DNS hostname (e.g. `abc123.us-east-2.elb.amazonaws.com`), not an IP address. The `argocd_server_url` output returns the hostname. On AKS it's a traditional IP.
 
 ---
 
@@ -343,7 +357,7 @@ Bootstraps the App of Apps pattern: a single root Application (`cluster-infra`) 
 - Grafana service: ClusterIP (port-forward to access) — change `service.type` to `LoadBalancer` in `cluster-infra/kube-prometheus/values.yaml` for persistent external access
 - No persistence on Prometheus or Grafana — keeps teardown clean; metrics history is lost on pod restart
 - AlertManager disabled — no alerting config needed for a demo environment
-- AKS control plane scrapers disabled (kubeScheduler, kubeControllerManager, kubeEtcd, kubeProxy) — AKS doesn't expose these endpoints
+- AKS control plane scrapers disabled (kubeScheduler, kubeControllerManager, kubeEtcd, kubeProxy) — AKS doesn't expose these endpoints. On EKS, these are available but disabled by default in the chart.
 
 ### Prerequisites
 
@@ -491,7 +505,7 @@ Unlike the ArgoCD gateway instance (which has no public delete API), the Kuberne
 **Decisions baked in:**
 - Agent chart: `oci://registry-1.docker.io/octopusdeploy/kubernetes-agent` `3.*.*`
 - Namespace: `octopus-k8s-agent`
-- Target name: `creid-aks`
+- Target name: `creid-eks`
 - Target tags: `k8s-agent`
 - Polling address: derived from `octopus_api_url` (`https://polling.creid.octopus.app`)
 
@@ -552,7 +566,7 @@ cd argocd/terraform
 terraform destroy
 ```
 
-This removes (in dependency order): the gateway Helm release, the ArgoCD Helm release, the AKS cluster, and the resource group. Deleting the AKS cluster also deletes the managed node resource group (`MC_*`), which cleans up the ArgoCD LoadBalancer IP and any Azure Disks.
+This removes (in dependency order): the gateway Helm release, the ArgoCD Helm release, the EKS cluster + VPC + node group (or AKS cluster + resource group). Deleting the EKS cluster also terminates all managed nodes and releases the LoadBalancer. For AKS, deleting the cluster also deletes the managed node resource group (`MC_*`), which cleans up the LoadBalancer IP and any Azure Disks.
 
 ### Known manual step — Octopus ArgoCD Instance
 
@@ -560,15 +574,18 @@ The Octopus ArgoCD Instance (not the same as a deployment target machine) does n
 
 ### Known teardown notes
 
-- **ArgoCD LoadBalancer IP**: Released when the AKS cluster is deleted (it lives in the `MC_` resource group). No manual cleanup needed.
-- **Grafana disks**: Persistence is disabled, so no Azure Disks are created.
+- **ArgoCD LoadBalancer URL**: Released when the cluster is deleted (EKS: AWS ELB; AKS: Azure LoadBalancer). No manual cleanup needed.
+- **Grafana disks**: Persistence is disabled, so no persistent disks are created.
+- **VPC (EKS only)**: The VPC, subnets, route tables, and NAT gateway are all managed by Terraform and cleaned up on `terraform destroy`. If you cancel midway through destroy, the VPC remains — run `terraform destroy` again to clean up.
 - **kubeconfig**: Cleaned by `pre-destroy.sh`. If you skip the script, clean up manually:
   ```bash
   kubectl config delete-context argocd-demo
   kubectl config delete-cluster argocd-demo
-  kubectl config delete-user clusterUser_creid-rg_creid-aks
+  kubectl config delete-user clusterUser_<rg>-<cluster>    # AKS
+  # or
+  kubectl config delete-user <cluster-name>               # EKS
   ```
-- **Static Public IP**: Not applicable — we're using a dynamic IP assigned by the LoadBalancer service, which is released with the cluster.
+- **Static Public IP**: Not applicable — we're using a dynamic address assigned by the LoadBalancer service, which is released with the cluster.
 
 ### Recreating after teardown
 
@@ -581,7 +598,7 @@ direnv reload              # loads updated ARGOCD_SERVER
 ./scripts/bootstrap.sh    # re-bootstraps ArgoCD against the new cluster
 ```
 
-`update-env.sh` reads the new LoadBalancer IP directly from Terraform outputs — no manual IP lookup needed.
+`update-env.sh` reads the new LoadBalancer URL directly from Terraform outputs — no manual URL lookup needed.
 
 ---
 
@@ -589,7 +606,7 @@ direnv reload              # loads updated ARGOCD_SERVER
 
 ```
 argocd/
-├── terraform/                  ← AKS infrastructure + Octopus integrations
+├── terraform/                  ← EKS/AKS infrastructure + Octopus integrations
 ├── argocd/
 │   ├── install-values.yaml     ← ArgoCD Helm values (Octopus account, RBAC)
 │   └── apps/
