@@ -30,6 +30,10 @@ terraform {
       source  = "OctopusDeploy/octopusdeploy"
       version = "~> 1.0"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.95, < 6.0.0"
+    }
   }
 
   backend "azurerm" {
@@ -53,6 +57,10 @@ provider "octopusdeploy" {
   api_key  = var.octopus_api_key
   space_id = var.octopus_space_id
 }
+
+# Keep the AWS provider configured so destroy runs can clean up any legacy
+# AWS-managed resources still present in state.
+provider "aws" {}
 
 # Both helm and kubernetes providers are configured to connect directly
 # to the AKS cluster via its kube_config output — no local kubeconfig required.
