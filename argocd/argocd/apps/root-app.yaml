@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/creid-octopus/iac-octopus
-    targetRevision: HEAD
+    targetRevision: renovate-config
     # ArgoCD watches this directory and creates an Application for each manifest it finds
     path: argocd/argocd/apps/cluster-infra
   destination:
