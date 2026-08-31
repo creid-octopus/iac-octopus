@@ -17,9 +17,8 @@ configs:
     # Serve HTTPS with self-signed cert (default)
     # Set to "true" to disable TLS and serve plain HTTP instead
     server.insecure: false
-  cm:
-    # Policles and API accounts managed via Terraform `set` block (argocd.tf)
-    # — see configs.cm in argocd.tf for accounts.octopus and repositories
+  # rbac and cm configured via kubernetes_config_map (argocd.tf) to avoid
+  # Helm quoting issues. See configs.cm key in argocd.tf.
   rbac:
     policy.default: "role:readonly"
     policy.csv: |
