@@ -93,4 +93,29 @@ process {
             }
         }
     }
+
+    step "patch-argocd-finalizers" {
+        name = "Patch ArgoCD Finalizers"
+        properties = {
+            Octopus.Action.TargetRoles = "k8s-agent"
+        }
+
+        action {
+            action_type = "Octopus.KubernetesRunScript"
+            properties = {
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    for app in $(kubectl get applications -n argocd -o jsonpath='{.items[*].metadata.name}'); do kubectl patch application $app -n argocd -p '{"metadata":{"finalizers":null}}' --type=merge
+                    ; done
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+            }
+            worker_pool_variable = "ExecutionContainer.Linux.WorkerPool"
+
+            container {
+                feed = "#{ExecutionContainer.Linux.WorkerPool}Feeds-1001"
+                image = "#{ExecutionContainer.Linux.DefaultImage}"
+            }
+        }
+    }
 }
