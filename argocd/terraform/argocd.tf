@@ -25,25 +25,28 @@ resource "helm_release" "argocd" {
   }
 
   timeout = 600 # ArgoCD can take a few minutes to fully start on B2s nodes
+}
 
-  # Enable the ArgoCD Repository controller and define registered Helm repos.
-  # The controller watches this config, auto-registers the repos, and caches
-  # their index.yaml on startup — no manual `argocd repo add` needed.
-  #
-  # NOTE: configs.cm must be set here (not in install-values.yaml) because
-  # the Helm `set` block merges into the values map but doesn't deep-merge
-  # nested YAML — it replaces the entire key. So accounts.octopus lives here.
-  #
-  # Using flow-sequence YAML ([...]) for repositories — block scalars (|-) get
-  # YAML-quoted by helm set, breaking ArgoCD's parser. Flow sequences parse
-  # correctly regardless of outer quoting.
-  set {
-    name  = "configs.cm"
-    value = <<-EOT
-      accounts.octopus: apiKey,renewAccessToken
-      repositories: [{name: datadog, type: helm, url: https://helm.datadoghq.com, insecure: true}]
-    EOT
+# ArgoCD config map — Repository controller config + Octopus API account.
+#
+# We apply this as a kubernetes_config_map instead of a helm_release set block
+# because Helm's set YAML-quotes string values, breaking ArgoCD's config parser.
+#
+# The install-values.yaml has an empty configs.cm{} which would normally produce
+# an empty argocd-cm; this manifest writes the real data. Applied after the
+# helm_release (via depends_on) so it overrides any default.
+resource "kubernetes_config_map" "argocd_cm" {
+  metadata {
+    name      = "argocd-cm"
+    namespace = kubernetes_namespace.argocd.metadata[0].name
   }
+
+  data = {
+    accounts.octopus = "apiKey,renewAccessToken"
+    repositories     = "- name: datadog\n  type: helm\n  url: https://helm.datadoghq.com\n  insecure: true\n"
+  }
+
+  depends_on = [helm_release.argocd]
 }
 
 # Brief pause after ArgoCD Helm upgrade before the token generation script runs.
