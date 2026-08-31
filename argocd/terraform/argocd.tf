@@ -42,8 +42,8 @@ resource "kubernetes_config_map" "argocd_cm" {
   }
 
   data = {
-    accounts.octopus = "apiKey,renewAccessToken"
-    repositories     = "- name: datadog\n  type: helm\n  url: https://helm.datadoghq.com\n  insecure: true\n"
+    ("accounts.octopus") = "apiKey,renewAccessToken"
+    ("repositories")     = "- name: datadog\n  type: helm\n  url: https://helm.datadoghq.com\n  insecure: true\n"
   }
 
   depends_on = [helm_release.argocd]
