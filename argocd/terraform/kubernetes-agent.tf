@@ -13,13 +13,13 @@ locals {
   # https://creid.octopus.app -> https://polling.creid.octopus.app
   octopus_polling_url = replace(var.octopus_api_url, "https://", "https://polling.")
   # Environment-suffixed agent name in Octopus (e.g. creid-aks-meta-nonproduction)
-  agent_name          = "${var.kubernetes_agent_name}-${var.environment}"
+  agent_name = "${var.kubernetes_agent_name}-${var.environment}"
   # Map environment slugs to Octopus environment display names (case-sensitive lookup)
   # REVIEW/SIMPLIFY LATER: This env-slug-to-name mapping is fragile. The intent is to look up Octopus
   # environment IDs so they can be attached to the Kubernetes agent deployment target.
   # Consider: pass environment IDs directly as a variable instead of resolving by name,
   # or use a dedicated variable for environment IDs vs names.
-  environment_names   = { for slug in split(",", var.octopus_environments) : slug => title(slug) }
+  environment_names = { for slug in split(",", var.octopus_environments) : slug => title(slug) }
 }
 
 # Pre-generate the agent identity — cert and polling subscription URI.

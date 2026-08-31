@@ -1,5 +1,8 @@
 # bootstrap.tf — applies the ArgoCD root Application via the kubernetes provider
 #
+# Also creates the monitoring namespace and Datadog API key secret so that the
+# ArgoCD-managed Datadog Helm app can mount credentials without inline secrets.
+#
 # This replaces the manual bootstrap.sh script. The root Application (cluster-infra)
 # is an ArgoCD CRD, so it can be applied directly via kubernetes_manifest without
 # needing the argoproj-labs/argocd provider or a running ArgoCD API connection.
@@ -34,8 +37,8 @@ resource "kubernetes_manifest" "base_argocd_apps" {
       }
       syncPolicy = {
         automated = {
-          selfHeal  = true
-          prune     = true
+          selfHeal = true
+          prune    = true
         }
         syncOptions = [
           "PruneLast=true"
@@ -43,4 +46,29 @@ resource "kubernetes_manifest" "base_argocd_apps" {
       }
     }
   }
+}
+
+# Monitoring namespace — owns the namespace so ArgoCD doesn't need CreateNamespace=true
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = "monitoring"
+  }
+  depends_on = [azurerm_kubernetes_cluster.main]
+}
+
+# Datadog API key stored as a Kubernetes secret — never passed as a plain Helm value.
+# The Datadog Helm chart references it via apiKeyExistingSecret (set in values.yaml).
+resource "kubernetes_secret" "datadog_api" {
+  metadata {
+    name      = "datadog-api-secret"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
+  }
+  data = {
+    apikey = var.datadog_api_key
+  }
+  type = "Opaque"
+  depends_on = [
+    kubernetes_namespace.monitoring,
+    azurerm_kubernetes_cluster.main,
+  ]
 }

@@ -9,8 +9,8 @@
 
 datadog:
   # --- Required: set these to your Datadog org credentials ---
-  site: "Datadog"   # Options: Datadog, DatadogEU, etc.
-  apiKey: ""        # Get from https://app.datadoghq.com/organization-configuration/credentials
+  site: "Datadog"                    # Options: Datadog, DatadogEU, etc.
+  apiKeyExistingSecret: "datadog-api-secret"
 
   # --- Cluster Agent ---
   # Disabled to save resources on B2s nodes. Enable if you need:

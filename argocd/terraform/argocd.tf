@@ -51,5 +51,5 @@ data "external" "argocd_ip" {
 locals {
   argocd_external_ip = data.external.argocd_ip.result.ip
   # Use override if set, otherwise compute from the live LoadBalancer IP
-  argocd_web_ui_url  = var.argocd_web_ui_url != "" ? var.argocd_web_ui_url : (local.argocd_external_ip != "" ? "https://${local.argocd_external_ip}" : "")
+  argocd_web_ui_url = var.argocd_web_ui_url != "" ? var.argocd_web_ui_url : (local.argocd_external_ip != "" ? "https://${local.argocd_external_ip}" : "")
 }
