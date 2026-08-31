@@ -121,42 +121,6 @@ resource "kubernetes_manifest" "base_argocd_apps" {
   }
 }
 
-# Pre-destroy cleanup — clears finalizers on ArgoCD applications so they don't block
-# namespace deletion. Without this, `kubectl delete ns argocd` hangs forever.
-resource "null_resource" "argocd_cleanup" {
-  triggers = {
-    argocd_release_id = helm_release.argocd.id
-  }
-
-  provisioner "local-exec" {
-    when    = destroy
-    environment = {
-      KUBECONFIG_CONTENT = azurerm_kubernetes_cluster.main.kube_config_raw
-    }
-    command = <<-EOT
-      set -euo pipefail
-
-      ARGOCD_NS="argocd"
-
-      KUBECONFIG_FILE=$(mktemp)
-      echo "$KUBECONFIG_CONTENT" > "$KUBECONFIG_FILE"
-      export KUBECONFIG="$KUBECONFIG_FILE"
-      trap 'rm -f "$KUBECONFIG_FILE"' EXIT
-
-      echo ">>> Clearing finalizers on ArgoCD applications..."
-      for app in $(kubectl get applications -n "$ARGOCD_NS" -o jsonpath='{.items[*].metadata.name}'); do
-        kubectl patch application "$app" -n "$ARGOCD_NS" -p '{"metadata":{"finalizers":null}}' --type=merge
-      done
-
-      echo ">>> Done."
-    EOT
-  }
-
-  depends_on = [
-    azurerm_kubernetes_cluster.main,
-  ]
-}
-
 # Monitoring namespace — Terraform owns this so ArgoCD doesn't need CreateNamespace=true
 resource "kubernetes_namespace" "monitoring" {
   metadata {
