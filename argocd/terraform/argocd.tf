@@ -35,19 +35,6 @@ resource "helm_release" "argocd" {
 # The install-values.yaml has an empty configs.cm{} which would normally produce
 # an empty argocd-cm; this manifest writes the real data. Applied after the
 # helm_release (via depends_on) so it overrides any default.
-resource "kubernetes_config_map" "argocd_cm" {
-  metadata {
-    name      = "argocd-cm"
-    namespace = kubernetes_namespace.argocd.metadata[0].name
-  }
-
-  data = {
-    ("accounts.octopus") = "apiKey,renewAccessToken"
-    ("repositories")     = "- name: datadog\n  type: helm\n  url: https://helm.datadoghq.com\n  insecure: true\n"
-  }
-
-  depends_on = [helm_release.argocd]
-}
 
 # Brief pause after ArgoCD Helm upgrade before the token generation script runs.
 # The rollout-status check in the local-exec handles readiness, but this gives

@@ -17,7 +17,15 @@ configs:
     # Serve HTTPS with self-signed cert (default)
     # Set to "true" to disable TLS and serve plain HTTP instead
     server.insecure: false
-  cm: {}
+  cm:
+    # Octopus API account — needed for the gateway to authenticate
+    accounts.octopus: apiKey,renewAccessToken
+    # Helm repos for the Repository controller (auto-registers on startup)
+    repositories: |
+      - name: datadog
+        type: helm
+        url: https://helm.datadoghq.com
+        insecure: true
   rbac:
     policy.default: "role:readonly"
     policy.csv: |
