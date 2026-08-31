@@ -24,7 +24,7 @@ process {
             is_disabled = true
             properties = {
                 Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
-                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GitRepository.Source = "Project"
                 Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
                 Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
                 Octopus.Action.Script.ScriptSource = "GitRepository"
@@ -44,13 +44,6 @@ process {
             container {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
-            }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
             }
         }
     }
@@ -84,7 +77,7 @@ process {
             action_type = "Octopus.TerraformApply"
             properties = {
                 Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
-                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GitRepository.Source = "Project"
                 Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
                 Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
                 Octopus.Action.Script.ScriptSource = "GitRepository"
@@ -104,13 +97,6 @@ process {
             container {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
-            }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
             }
         }
     }
@@ -183,7 +169,7 @@ process {
             action_type = "Octopus.TerraformApply"
             properties = {
                 Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
-                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GitRepository.Source = "Project"
                 Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
                 Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
                 Octopus.Action.Script.ScriptSource = "GitRepository"
@@ -204,13 +190,6 @@ process {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
             }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
-            }
         }
     }
 
@@ -221,7 +200,7 @@ process {
             action_type = "Octopus.TerraformPlan"
             properties = {
                 Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
-                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GitRepository.Source = "Project"
                 Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
                 Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
                 Octopus.Action.Script.ScriptSource = "GitRepository"
@@ -240,13 +219,6 @@ process {
             container {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
-            }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
             }
         }
     }
@@ -275,7 +247,7 @@ process {
             action_type = "Octopus.TerraformApply"
             properties = {
                 Octopus.Action.AzureAccount.Variable = "Project.AzureAccount"
-                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GitRepository.Source = "Project"
                 Octopus.Action.GoogleCloud.ImpersonateServiceAccount = "False"
                 Octopus.Action.GoogleCloud.UseVMServiceAccount = "True"
                 Octopus.Action.Script.ScriptSource = "GitRepository"
@@ -295,13 +267,6 @@ process {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
             }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
-            }
         }
     }
 
@@ -313,7 +278,7 @@ process {
             properties = {
                 Octopus.Action.Azure.AccountId = "#{Project.AzureAccount}"
                 Octopus.Action.EnabledFeatures = "Octopus.Features.SubstituteInFiles"
-                Octopus.Action.GitRepository.Source = "External"
+                Octopus.Action.GitRepository.Source = "Project"
                 Octopus.Action.Script.ScriptFileName = "argocd/scripts/terraform-outputs.sh"
                 Octopus.Action.Script.ScriptSource = "GitRepository"
                 Octopus.Action.SubstituteInFiles.TargetFiles = <<-EOT
@@ -327,13 +292,6 @@ process {
             container {
                 feed = "docker-hub"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
-            }
-
-            git_dependencies {
-                default_branch = "main"
-                git_credential_type = "GitHub"
-                github_connection_id = "GitHubAppConnections-21"
-                repository_uri = "https://github.com/creid-octopus/iac-octopus.git"
             }
         }
     }
