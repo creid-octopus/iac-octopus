@@ -7,7 +7,7 @@ spec:
   project: default
   sources:
     # kube-prometheus-stack chart from the prometheus-community registry
-    - repoURL: oci://public.ecr.aws/datadog
+    - repoURL: oci://public.ecr.aws/datadog/charts
       chart: datadog
       targetRevision: "3.*.*"
       helm:
