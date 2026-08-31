@@ -9,7 +9,7 @@ spec:
     # kube-prometheus-stack chart from the prometheus-community registry
     - repoURL: https://helm.datadoghq.com
       chart: datadog/datadog
-      targetRevision: "3.*.*"
+      targetRevision: "3.240.1"
       helm:
         valueFiles:
           - $values/argocd/cluster-infra/datadog/values.yaml
