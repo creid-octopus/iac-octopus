@@ -1,7 +1,8 @@
 # bootstrap.tf — applies the ArgoCD root Application via the kubernetes provider
 #
-# Also creates the monitoring namespace and Datadog API key secret so that the
-# ArgoCD-managed Datadog Helm app can mount credentials without inline secrets.
+# Also creates the monitoring namespace, Datadog API key secret, and registers
+# the Datadog Helm repo so that the ArgoCD-managed Datadog Helm app can resolve
+# the chart.
 #
 # This replaces the manual bootstrap.sh script. The root Application (cluster-infra)
 # is an ArgoCD CRD, so it can be applied directly via kubernetes_manifest without
@@ -13,6 +14,78 @@
 #
 # depends_on helm_release.argocd ensures the ArgoCD CRDs are installed before
 # this manifest is applied.
+
+# Registers the Datadog Helm chart repository with ArgoCD so that
+# the datadog/datadog chart in the Application below can be resolved.
+#
+# The right alternative is to enable the ArgoCD Repository controller, which watches
+# a "Repository" CRD and registers repos declaratively. That controller is installed
+# in ArgoCD 2.7+ but must be explicitly enabled in the ArgoCD server config
+# (argocd-cm ConfigMap: repository.type = helm, repository.url = https://helm.datadoghq.com).
+# See: https://argo-cd.readthedocs.io/en/stable/operator-manual/repositories/
+# Until that's enabled, the argocd CLI's "repo add" subcommand is the only way to register
+# a Helm repo with this instance.
+resource "null_resource" "register_datadog_helm_repo" {
+  depends_on = [time_sleep.wait_for_argocd]
+
+  triggers = {
+    # Re-run if ArgoCD is reinstalled
+    argocd_release_id = helm_release.argocd.id
+  }
+
+  provisioner "local-exec" {
+    environment = {
+      KUBECONFIG_CONTENT = azurerm_kubernetes_cluster.main.kube_config_raw
+    }
+    interpreter = ["bash", "-c"]
+    command     = <<-EOT
+      set -euo pipefail
+
+      ARGOCD_NS="argocd"
+      ARGOCD_PASSWORD="${var.argocd_admin_password}"
+
+      KUBECONFIG_FILE=$(mktemp)
+      echo "$KUBECONFIG_CONTENT" > "$KUBECONFIG_FILE"
+      export KUBECONFIG="$KUBECONFIG_FILE"
+      trap 'rm -f "$KUBECONFIG_FILE"; kill "$PF_PID" 2>/dev/null || true' EXIT
+
+      echo ">>> Waiting for argocd-server deployment to be ready..."
+      kubectl rollout status deployment/argocd-server \
+        --namespace "$ARGOCD_NS" \
+        --timeout=300s
+
+      echo ">>> Starting port-forward on localhost:18083 -> argocd-server:443..."
+      kubectl port-forward svc/argocd-server \
+        --namespace "$ARGOCD_NS" \
+        18083:443 &
+      PF_PID=$!
+
+      echo ">>> Waiting for port-forward to become available..."
+      for i in $(seq 1 20); do
+        if nc -z localhost 18083 2>/dev/null; then
+          echo "    Ready after $i attempt(s)."
+          break
+        fi
+        echo "    Attempt $i/20 — retrying in 3s..."
+        sleep 3
+      done
+
+      echo ">>> Logging in to ArgoCD..."
+      argocd login localhost:18083 \
+        --username admin \
+        --password "$ARGOCD_PASSWORD" \
+        --insecure \
+        --grpc-web
+
+      echo ">>> Registering Datadog Helm chart repository..."
+      argocd repo add https://helm.datadoghq.com \
+        --type helm \
+        --name datadog \
+        --insecure-skip-server-verification \
+        --grpc-web
+    EOT
+  }
+}
 
 resource "kubernetes_manifest" "base_argocd_apps" {
   depends_on = [time_sleep.wait_for_argocd]
