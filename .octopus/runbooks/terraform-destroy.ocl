@@ -113,7 +113,7 @@ process {
             worker_pool_variable = "ExecutionContainer.Linux.WorkerPool"
 
             container {
-                feed = "#{ExecutionContainer.Linux.WorkerPool}Feeds-1001"
+                feed = "dockerhub-anonymous"
                 image = "#{ExecutionContainer.Linux.DefaultImage}"
             }
         }
