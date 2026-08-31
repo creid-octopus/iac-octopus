@@ -130,13 +130,18 @@ resource "null_resource" "argocd_cleanup" {
 
   provisioner "local-exec" {
     when    = destroy
+    environment = {
+      KUBECONFIG_CONTENT = azurerm_kubernetes_cluster.main.kube_config_raw
+    }
     command = <<-EOT
       set -euo pipefail
 
       ARGOCD_NS="argocd"
 
       KUBECONFIG_FILE=$(mktemp)
-      echo "${azurerm_kubernetes_cluster.main.kube_config_raw}" > "$KUBECONFIG_FILE"
+      echo "$KUBECONFIG_CONTENT" > "$KUBECONFIG_FILE"
+      export KUBECONFIG="$KUBECONFIG_FILE"
+      trap 'rm -f "$KUBECONFIG_FILE"' EXIT
 
       echo ">>> Clearing finalizers on ArgoCD applications..."
       for app in $(kubectl get applications -n "$ARGOCD_NS" -o jsonpath='{.items[*].metadata.name}'); do
@@ -144,7 +149,6 @@ resource "null_resource" "argocd_cleanup" {
       done
 
       echo ">>> Done."
-      rm -f "$KUBECONFIG_FILE"
     EOT
   }
 
