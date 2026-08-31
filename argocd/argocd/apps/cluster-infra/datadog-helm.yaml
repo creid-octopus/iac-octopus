@@ -28,4 +28,4 @@ spec:
       - CreateNamespace=true
       # Required for kube-prometheus-stack CRDs (ServerSideApply avoids annotation size limits)
       - ServerSideApply=true
-      - pruneLast=true
+      - PruneLast=true
