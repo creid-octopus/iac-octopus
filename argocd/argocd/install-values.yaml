@@ -18,8 +18,8 @@ configs:
     # Set to "true" to disable TLS and serve plain HTTP instead
     server.insecure: false
   cm:
-    # Dedicated account for Octopus Deploy — API key + token renewal (for gateway integration)
-    accounts.octopus: apiKey,renewAccessToken
+    # Policles and API accounts managed via Terraform `set` block (argocd.tf)
+    # — see configs.cm in argocd.tf for accounts.octopus and repositories
   rbac:
     policy.default: "role:readonly"
     policy.csv: |

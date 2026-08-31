@@ -25,6 +25,25 @@ resource "helm_release" "argocd" {
   }
 
   timeout = 600 # ArgoCD can take a few minutes to fully start on B2s nodes
+
+  # Enable the ArgoCD Repository controller and define registered Helm repos.
+  # The controller watches this config, auto-registers the repos, and caches
+  # their index.yaml on startup — no manual `argocd repo add` needed.
+  #
+  # NOTE: configs.cm must be set here (not in install-values.yaml) because
+  # the Helm `set` block merges into the values map but doesn't deep-merge
+  # nested YAML — it replaces the entire key. So accounts.octopus lives here.
+  #
+  # Using flow-sequence YAML ([...]) for repositories — block scalars (|-) get
+  # YAML-quoted by helm set, breaking ArgoCD's parser. Flow sequences parse
+  # correctly regardless of outer quoting.
+  set {
+    name  = "configs.cm"
+    value = <<-EOT
+      accounts.octopus: apiKey,renewAccessToken
+      repositories: [{name: datadog, type: helm, url: https://helm.datadoghq.com, insecure: true}]
+    EOT
+  }
 }
 
 # Brief pause after ArgoCD Helm upgrade before the token generation script runs.
