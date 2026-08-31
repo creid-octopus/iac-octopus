@@ -12,8 +12,9 @@ resource "helm_release" "argocd" {
   chart      = "argo-cd"
   namespace  = kubernetes_namespace.argocd.metadata[0].name
 
-  # Pin this once you've validated the install — avoids unexpected upgrades
-  # version = "x.x.x"
+  # Pin to a specific version. Update manually (or via Renovate PR) and validate
+  # against the ArgoCD release notes before applying.
+  version = "10.4.2"
 
   values = [file("${path.module}/../argocd/install-values.yaml")]
 

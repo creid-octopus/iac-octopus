@@ -34,8 +34,9 @@ resource "kubernetes_manifest" "base_argocd_apps" {
       }
       syncPolicy = {
         automated = {
-          selfHeal = true
-          prune    = true
+          selfHeal  = true
+          prune     = true
+          pruneLast = true
         }
       }
     }

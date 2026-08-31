@@ -1,18 +1,18 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kube-prometheus
+  name: datadog
   namespace: argocd
 spec:
   project: default
   sources:
     # kube-prometheus-stack chart from the prometheus-community registry
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: kube-prometheus-stack
-      targetRevision: "70.*"
+    - repoURL: https://helm.datadoghq.com
+      chart: datadog/datadog
+      targetRevision: "3.*.*"
       helm:
         valueFiles:
-          - $values/argocd/cluster-infra/kube-prometheus/values.yaml
+          - $values/argocd/cluster-infra/datadog/values.yaml
     # Values file from this repo
     - repoURL: https://github.com/creid-octopus/iac-octopus
       targetRevision: HEAD

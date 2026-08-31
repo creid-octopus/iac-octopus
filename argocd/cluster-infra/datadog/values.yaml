@@ -1,0 +1,69 @@
+# DataDog Helm chart values — AKS demo environment
+# Chart: datadog/datadog from https://helm.datadoghq.com
+#
+# Tuned for Standard_B2s nodes (2 vCPU, 4 GB) — minimal footprint
+# to leave headroom for ArgoCD + kube-prometheus-stack + Octopus agents.
+#
+# To enable additional features, uncomment the relevant sections.
+# Each enabled component adds ~50-200m CPU and 100-500Mi memory.
+
+datadog:
+  # --- Required: set these to your Datadog org credentials ---
+  site: "Datadog"   # Options: Datadog, DatadogEU, etc.
+  apiKey: ""        # Get from https://app.datadoghq.com/organization-configuration/credentials
+
+  # --- Cluster Agent ---
+  # Disabled to save resources on B2s nodes. Enable if you need:
+  #   - Topology-aware paging
+  #   - Pod-level metrics aggregation
+  #   - External metric provider integration
+  clusterAgent:
+    enabled: false
+
+  # --- Agent Configuration ---
+  agents:
+    # Enable the cluster-wide agent (runs on every node)
+    # Requires at minimum: 100m CPU, 150Mi memory per node
+    enabled: true
+
+    # DogStatsD — collect custom app metrics via UDP/Datagram
+    dogstatsd:
+      enabled: true
+      port: 8125
+      nonLocalTraffic: true
+
+    # System Probe — network performance monitoring (eBPF-based)
+    systemProbe:
+      enabled: true
+      debugPort: 0   # set to 1 to enable eBPF debugging
+
+    # Process Agent — container process monitoring
+    # Disabled for B2s budget. Enable for process-level visibility.
+    processAgent:
+      enabled: false
+      process_collection:
+        enabled: false
+
+    # APM — Application Performance Monitoring
+    # Disabled for B2s budget. Enable to trace requests through your services.
+    apm:
+      enabled: false
+      port: 8126
+      hostPort:
+        enabled: false
+
+    # Logs Agent — collect container logs
+    # Disabled for B2s budget. Enable to send logs to Datadog.
+    logs:
+      enabled: false
+      containerCollectAll: true
+
+# --- Node Agent Kubernetes Resources ---
+# Adjust if enabling more agents above.
+resources:
+  requests:
+    cpu: 100m
+    memory: 150Mi
+  limits:
+    cpu: 300m
+    memory: 300Mi

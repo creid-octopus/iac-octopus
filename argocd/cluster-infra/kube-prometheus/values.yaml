@@ -49,6 +49,42 @@ grafana:
     datasources:
       enabled: true
 
+  # --- Plugins ---
+  # Add plugins here (e.g., "- slimentan1-piechart-panel" for unsigned plugin).
+  # For unsigned plugins, also set env.GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS
+  # below.
+  plugins: []
+  #   - slimentan1-piechart-panel
+
+  # --- Environment Variables ---
+  # Use this for Grafana env vars (API keys, plugin config, etc.).
+  # Sensitive values should be mounted from Kubernetes secrets (see secretEnv below).
+  env:
+    # Uncomment to allow unsigned plugins (comma-separated list of plugin IDs):
+    # GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: "piechart"
+    #
+    # Uncomment to set a custom root URL:
+    # GF_SERVER_ROOT_URL: "https://grafana.example.com"
+
+  # For sensitive values, mount from Kubernetes secrets:
+  # envFrom:
+  #   - secretRef:
+  #       name: grafana-secrets
+  #
+  # Or per-variable from secrets:
+  # secretEnv:
+  #   - name: GRAFANA_OPENAI_API_KEY
+  #     secretName: grafana-secrets
+  #     secretKey: openai-api-key
+
+  # --- Admin Password ---
+  # Currently plain-text for demo simplicity. For production/shared use,
+  # mount the password from a Kubernetes secret instead:
+  #
+  # existingSecret: grafana-admin-password
+  # adminUser: admin
+  # adminPasswordKey: password
+
 # ── Alertmanager ───────────────────────────────────────────────────────────────
 # Disabled — no alerting config in this demo environment
 alertmanager:
