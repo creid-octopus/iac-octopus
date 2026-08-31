@@ -121,35 +121,59 @@ resource "kubernetes_manifest" "base_argocd_apps" {
   }
 }
 
-# Monitoring namespace — commented out for testing on an existing cluster.
-# Re-enable (and remove the data source below) for a cold spin-up from scratch.
-# resource "kubernetes_namespace" "monitoring" {
-#   metadata {
-#     name = "monitoring"
-#   }
-#   depends_on = [azurerm_kubernetes_cluster.main]
-# }
+# Pre-destroy cleanup — clears finalizers on ArgoCD applications so they don't block
+# namespace deletion. Without this, `kubectl delete ns argocd` hangs forever.
+resource "null_resource" "argocd_cleanup" {
+  triggers = {
+    argocd_release_id = helm_release.argocd.id
+  }
 
-# Datadog API key stored as a Kubernetes secret — never passed as a plain Helm value.
-# The Datadog Helm chart references it via apiKeyExistingSecret (set in values.yaml).
-# Uses a data source to check the namespace exists (created by ArgoCD or pre-existing)
-# instead of depending on a kubernetes_namespace resource that would fail on "already exists".
-data "kubernetes_namespace" "monitoring" {
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      set -euo pipefail
+
+      ARGOCD_NS="argocd"
+
+      KUBECONFIG_FILE=$(mktemp)
+      echo "${azurerm_kubernetes_cluster.main.kube_config_raw}" > "$KUBECONFIG_FILE"
+
+      echo ">>> Clearing finalizers on ArgoCD applications..."
+      for app in $(kubectl get applications -n "$ARGOCD_NS" -o jsonpath='{.items[*].metadata.name}'); do
+        kubectl patch application "$app" -n "$ARGOCD_NS" -p '{"metadata":{"finalizers":null}}' --type=merge
+      done
+
+      echo ">>> Done."
+      rm -f "$KUBECONFIG_FILE"
+    EOT
+  }
+
+  depends_on = [
+    azurerm_kubernetes_cluster.main,
+  ]
+}
+
+# Monitoring namespace — Terraform owns this so ArgoCD doesn't need CreateNamespace=true
+resource "kubernetes_namespace" "monitoring" {
   metadata {
     name = "monitoring"
   }
+  depends_on = [azurerm_kubernetes_cluster.main]
 }
 
+# Datadog API key stored as a Kubernetes secret — never passed as a plain Helm value.
+# The Datadog Helm chart references it via apiKeyExistingSecret (set in values.yaml).
 resource "kubernetes_secret" "datadog_api" {
   metadata {
     name      = "datadog-api-secret"
-    namespace = data.kubernetes_namespace.monitoring.metadata[0].name
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
   }
   data = {
     apikey = var.datadog_api_key
   }
   type = "Opaque"
   depends_on = [
+    kubernetes_namespace.monitoring,
     azurerm_kubernetes_cluster.main,
   ]
 }

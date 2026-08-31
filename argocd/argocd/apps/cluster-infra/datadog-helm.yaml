@@ -9,7 +9,7 @@ spec:
     # Datadog Helm chart from the official registry
     - repoURL: https://helm.datadoghq.com
       chart: datadog/datadog
-      targetRevision: "3.241.0"
+      targetRevision: "3.*.*"
       helm:
         valueFiles:
           - $values/argocd/cluster-infra/datadog/values.yaml
