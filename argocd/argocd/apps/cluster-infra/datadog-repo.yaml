@@ -1,0 +1,9 @@
+# Register the Datadog Helm chart repository so ArgoCD can resolve
+# the datadog/datadog chart used by the Application below.
+apiVersion: argoproj.io/v1alpha1
+kind: Repository
+metadata:
+  name: datadog
+  namespace: argocd
+spec:
+  url: https://helm.datadoghq.com
