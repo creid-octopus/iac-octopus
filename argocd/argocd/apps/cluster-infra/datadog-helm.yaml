@@ -15,7 +15,7 @@ spec:
           - $values/argocd/cluster-infra/datadog/values.yaml
     # Values file from this repo
     - repoURL: https://github.com/creid-octopus/iac-octopus
-      targetRevision: HEAD
+      targetRevision: renovate-config
       ref: values
   destination:
     server: https://kubernetes.default.svc

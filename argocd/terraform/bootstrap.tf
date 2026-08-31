@@ -48,27 +48,35 @@ resource "kubernetes_manifest" "base_argocd_apps" {
   }
 }
 
-# Monitoring namespace — owns the namespace so ArgoCD doesn't need CreateNamespace=true
-resource "kubernetes_namespace" "monitoring" {
-  metadata {
-    name = "monitoring"
-  }
-  depends_on = [azurerm_kubernetes_cluster.main]
-}
+# Monitoring namespace — commented out for testing on an existing cluster.
+# Re-enable (and remove the data source below) for a cold spin-up from scratch.
+# resource "kubernetes_namespace" "monitoring" {
+#   metadata {
+#     name = "monitoring"
+#   }
+#   depends_on = [azurerm_kubernetes_cluster.main]
+# }
 
 # Datadog API key stored as a Kubernetes secret — never passed as a plain Helm value.
 # The Datadog Helm chart references it via apiKeyExistingSecret (set in values.yaml).
+# Uses a data source to check the namespace exists (created by ArgoCD or pre-existing)
+# instead of depending on a kubernetes_namespace resource that would fail on "already exists".
+data "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = "monitoring"
+  }
+}
+
 resource "kubernetes_secret" "datadog_api" {
   metadata {
     name      = "datadog-api-secret"
-    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    namespace = data.kubernetes_namespace.monitoring.metadata[0].name
   }
   data = {
     apikey = var.datadog_api_key
   }
   type = "Opaque"
   depends_on = [
-    kubernetes_namespace.monitoring,
     azurerm_kubernetes_cluster.main,
   ]
 }
