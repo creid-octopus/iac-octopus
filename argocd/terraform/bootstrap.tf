@@ -119,6 +119,10 @@ resource "kubernetes_manifest" "base_argocd_apps" {
       }
     }
   }
+
+  field_manager {
+    force_conflicts = true
+  }
 }
 
 # Monitoring namespace — commented out for testing on an existing cluster.
