@@ -4,6 +4,13 @@ locals {
   env            = var.environment
   cluster_name   = "${var.cluster_name}-${local.env}"
   resource_group = "${var.resource_group_name}-${local.env}"
+
+  # Additional AKS clusters beyond the primary (c01).
+  # Each entry: key = cluster ID suffix, value = full AKS cluster name.
+  extra_clusters = {
+    c02 = "creid-aks-meta-nonprod-c02"
+    c03 = "creid-aks-meta-nonprod-c03"
+  }
 }
 
 resource "azurerm_resource_group" "main" {
@@ -15,6 +22,7 @@ resource "azurerm_resource_group" "main" {
     cluster_name = local.cluster_name
     project      = "argocd-demo"
     managed_by   = "terraform"
+    demo_stack   = "creid-aks"
   }
 }
 
@@ -59,8 +67,59 @@ resource "azurerm_kubernetes_cluster" "main" {
   }
 
   tags = {
-    environment = var.environment
-    project     = "argocd-demo"
-    managed_by  = "terraform"
+    environment    = var.environment
+    project        = "argocd-demo"
+    managed_by     = "terraform"
+    demo_stack     = "creid-aks"
+  }
+}
+
+# ── Additional AKS Clusters ──────────────────────────────────────────────────
+# c02 and c03 share the same resource group as c01 (the primary cluster).
+# Each gets its own managed identity and node pool.
+
+resource "azurerm_kubernetes_cluster" "extra" {
+  for_each = local.extra_clusters
+
+  name                = each.value
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  dns_prefix          = each.value
+  kubernetes_version  = var.kubernetes_version
+
+  default_node_pool {
+    name    = "system"
+    vm_size = var.node_size
+
+    auto_scaling_enabled = true
+    min_count            = var.node_min_count
+    max_count            = var.node_max_count
+
+    os_disk_size_gb = 30
+
+    # Required when changing node pool VM size in-place
+    temporary_name_for_rotation = "systemtmp"
+
+    upgrade_settings {
+      drain_timeout_in_minutes      = 0
+      max_surge                     = "10%"
+      node_soak_duration_in_minutes = 0
+    }
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  network_profile {
+    network_plugin    = "kubenet"
+    load_balancer_sku = "standard"
+  }
+
+  tags = {
+    environment    = var.environment
+    project        = "argocd-demo"
+    managed_by     = "terraform"
+    demo_stack     = "creid-aks"
   }
 }

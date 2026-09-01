@@ -40,13 +40,34 @@ output "get_gateway_logs" {
 }
 
 output "k8s_agent_target_id" {
-  description = "Octopus deployment target ID for the Kubernetes agent"
+  description = "Octopus deployment target ID for the primary Kubernetes agent (c01)"
   value       = octopusdeploy_kubernetes_agent_deployment_target.k8s_agent.id
+}
+
+output "k8s_agent_target_ids" {
+  description = "Map of cluster IDs to Octopus deployment target IDs"
+  value       = {
+    c02 = octopusdeploy_kubernetes_agent_deployment_target.extra_agent["c02"].id
+    c03 = octopusdeploy_kubernetes_agent_deployment_target.extra_agent["c03"].id
+  }
+}
+
+output "k8s_agent_names" {
+  description = "Map of cluster IDs to Octopus agent target names"
+  value       = {
+    c02 = helm_release.extra_agent_c02.name
+    c03 = helm_release.extra_agent_c03.name
+  }
 }
 
 output "get_k8s_agent_logs" {
   description = "Tail Kubernetes agent logs to verify Octopus connection"
   value       = "kubectl logs -l app.kubernetes.io/name=kubernetes-agent -n ${var.kubernetes_agent_namespace} --context argocd-demo-${var.environment} -f"
+}
+
+output "get_extra_k8s_agent_logs" {
+  description = "Tail Kubernetes agent logs for extra clusters. Use 'az aks get-credentials' with the cluster name, then: kubectl logs -l app.kubernetes.io/name=kubernetes-agent -n octopus-k8s-agent --context=<cluster-name> -f"
+  value       = "az aks get-credentials -g creid-rg-meta-nonprod -n <cluster-name>; kubectl logs -l app.kubernetes.io/name=kubernetes-agent -n octopus-k8s-agent -f"
 }
 
 output "get_grafana_ip" {

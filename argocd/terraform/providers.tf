@@ -71,3 +71,43 @@ provider "kubernetes" {
   client_key             = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_key)
   cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].cluster_ca_certificate)
 }
+
+# ── Provider aliases for additional clusters ─────────────────────────────────
+# Each alias binds to its cluster's kube_config, enabling per-cluster K8s/Helm
+# resources (kubernetes agents) without module indirection.
+
+provider "kubernetes" {
+  alias  = "c02"
+  host                   = azurerm_kubernetes_cluster.extra["c02"].kube_config[0].host
+  client_certificate     = base64decode(azurerm_kubernetes_cluster.extra["c02"].kube_config[0].client_certificate)
+  client_key             = base64decode(azurerm_kubernetes_cluster.extra["c02"].kube_config[0].client_key)
+  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.extra["c02"].kube_config[0].cluster_ca_certificate)
+}
+
+provider "kubernetes" {
+  alias  = "c03"
+  host                   = azurerm_kubernetes_cluster.extra["c03"].kube_config[0].host
+  client_certificate     = base64decode(azurerm_kubernetes_cluster.extra["c03"].kube_config[0].client_certificate)
+  client_key             = base64decode(azurerm_kubernetes_cluster.extra["c03"].kube_config[0].client_key)
+  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.extra["c03"].kube_config[0].cluster_ca_certificate)
+}
+
+provider "helm" {
+  alias  = "c02"
+  kubernetes {
+    host                   = azurerm_kubernetes_cluster.extra["c02"].kube_config[0].host
+    client_certificate     = base64decode(azurerm_kubernetes_cluster.extra["c02"].kube_config[0].client_certificate)
+    client_key             = base64decode(azurerm_kubernetes_cluster.extra["c02"].kube_config[0].client_key)
+    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.extra["c02"].kube_config[0].cluster_ca_certificate)
+  }
+}
+
+provider "helm" {
+  alias  = "c03"
+  kubernetes {
+    host                   = azurerm_kubernetes_cluster.extra["c03"].kube_config[0].host
+    client_certificate     = base64decode(azurerm_kubernetes_cluster.extra["c03"].kube_config[0].client_certificate)
+    client_key             = base64decode(azurerm_kubernetes_cluster.extra["c03"].kube_config[0].client_key)
+    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.extra["c03"].kube_config[0].cluster_ca_certificate)
+  }
+}

@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cluster-infra
+  namespace: argocd
+spec:
+  generators:
+    - clusters: {}  # auto-discovers all registered ArgoCD clusters
+  template:
+    metadata:
+      name: '{{cluster.name}}-infra'
+    spec:
+      project: default
+      destination:
+        server: '{{server}}'
+        namespace: monitoring
+      sources:
+        - repoURL: https://prometheus-community.github.io/helm-charts
+          chart: kube-prometheus-stack
+          targetRevision: "70.*"
+          helm:
+            valueFiles:
+              - $values/argocd/cluster-infra/kube-prometheus/values.yaml
+        - repoURL: https://github.com/creid-octopus/iac-octopus
+          targetRevision: HEAD
+          ref: values
+      syncPolicy:
+        automated:
+          selfHeal: true
+          prune: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
