@@ -5,14 +5,21 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - clusters: {}  # auto-discovers all registered ArgoCD clusters
+    - list:
+        elements:
+          - cluster: creid-aks-meta-nonproduction
+            url: https://creid-aks-meta-nonproduction-p3ulikm8.hcp.centralus.azmk8s.io:443
+          - cluster: creid-aks-meta-nonprod-c02
+            url: https://creid-aks-meta-nonprod-c02-y84e10fw.hcp.centralus.azmk8s.io:443
+          - cluster: creid-aks-meta-nonprod-c03
+            url: https://creid-aks-meta-nonprod-c03-0kes0hvc.hcp.centralus.azmk8s.io:443
   template:
     metadata:
-      name: '{{cluster.name}}-infra'
+      name: '{{cluster}}-infra'
     spec:
       project: default
       destination:
-        server: '{{server}}'
+        server: '{{url}}'
         namespace: monitoring
       sources:
         - repoURL: https://prometheus-community.github.io/helm-charts
