@@ -38,9 +38,9 @@ resource "kubernetes_manifest" "base_argocd_apps" {
           prune    = true
         }
       }
-    }
-    field_manager = {
-      force_conflicts = true
+      field_manager = {
+        force_conflicts = true
+      }
     }
   }
 }
