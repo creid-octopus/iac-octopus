@@ -123,16 +123,16 @@ resource "helm_release" "kubernetes_agent" {
   }
 
   # Custom tooling image for Kubernetes agent deployment target (replace default Octopus tooling)
-  set {
-    name  = "scriptPods.deploymentTarget.image.repository"
-    value = "ghcr.io/creid-octopus/demo-kubernetes-krane-toolbox"
-  }
-  set {
-    name  = "scriptPods.deploymentTarget.image.tag"
-    value = "1"
-  }
-  set {
-    name  = "scriptPods.deploymentTarget.image.pullPolicy"
-    value = "Always"
-  }
+  # set {
+  #   name  = "scriptPods.deploymentTarget.image.repository"
+  #   value = "ghcr.io/creid-octopus/demo-kubernetes-krane-toolbox"
+  # }
+  # set {
+  #   name  = "scriptPods.deploymentTarget.image.tag"
+  #   value = "1"
+  # }
+  # set {
+  #   name  = "scriptPods.deploymentTarget.image.pullPolicy"
+  #   value = "Always"
+  # }
 }
