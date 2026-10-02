@@ -1,0 +1,60 @@
+// Renovate config for monitoring the Helm chart versions in the ArgoCD demo stack.
+// Opened PRs will bump versions for review before merging.
+
+module.exports = {
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  description: 'Monitor Helm chart versions for the ArgoCD demo stack',
+  onboardingConfig: {
+    extends: ['config:recommended'],
+  },
+
+  packageRules: [
+    // --- ArgoCD Helm chart (argoproj) ---
+    {
+      matchDatasources: ['helm'],
+      matchNames: ['argo-cd'],
+      matchRepositories: ['argoproj/argo-helm'],
+      description: 'ArgoCD server chart — pin semver range, update minor/patch automatically',
+      versioning: 'semver',
+      automerge: false,
+    },
+
+    // --- DataDog Helm chart ---
+    {
+      matchDatasources: ['helm'],
+      matchNames: ['datadog'],
+      matchRepositories: ['DataDog/helm-charts'],
+      description: 'DataDog agent chart — pin semver range, update minor/patch automatically',
+      versioning: 'semver',
+      automerge: false,
+    },
+
+    // --- kube-prometheus-stack ---
+    {
+      matchDatasources: ['helm'],
+      matchNames: ['kube-prometheus-stack'],
+      matchRepositories: ['prometheus-community/kube-prometheus-stack'],
+      description: 'kube-prometheus-stack chart — already 70.*, keep monitoring',
+      versioning: 'semver',
+      automerge: false,
+    },
+
+    // --- Octopus ArgoCD Gateway chart ---
+    {
+      matchDatasources: ['docker'],
+      matchPackageNames: ['octopusdeploy/octopus-argocd-gateway-chart'],
+      description: 'Octopus ArgoCD Gateway chart — pinned at 1.23.0, alert on new versions',
+      versioning: 'semver',
+      automerge: false,
+    },
+
+    // --- Octopus Kubernetes Agent ---
+    {
+      matchDatasources: ['docker'],
+      matchPackageNames: ['octopusdeploy/kubernetes-agent'],
+      description: 'Octopus Kubernetes Agent chart — major version 3.*, alert on breaking changes',
+      versioning: 'semver',
+      automerge: false,
+    },
+  ],
+};

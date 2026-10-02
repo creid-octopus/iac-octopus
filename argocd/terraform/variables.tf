@@ -159,3 +159,11 @@ variable "kubernetes_agent_chart_version" {
   type        = string
   default     = "3.*.*"
 }
+
+# ─── Datadog ──────────────────────────────────────────────────────────────────
+
+variable "datadog_api_key" {
+  description = "Datadog API key — stored in a Kubernetes secret and referenced by the Helm chart via apiKeyExistingSecret"
+  type        = string
+  sensitive   = true
+}

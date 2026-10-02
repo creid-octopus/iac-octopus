@@ -41,3 +41,27 @@ resource "kubernetes_manifest" "base_argocd_apps" {
     }
   }
 }
+
+# ─── Datadog ──────────────────────────────────────────────────────────────────
+# Terraform owns the datadog namespace and the Datadog API key secret.
+# The ArgoCD-managed Datadog chart reads the key through apiKeyExistingSecret.
+# A dedicated namespace avoids fighting kube-prometheus over "monitoring".
+
+resource "kubernetes_namespace" "datadog" {
+  metadata {
+    name = "datadog"
+  }
+  depends_on = [azurerm_kubernetes_cluster.main]
+}
+
+resource "kubernetes_secret" "datadog_api" {
+  metadata {
+    name      = "datadog-api-secret"
+    namespace = kubernetes_namespace.datadog.metadata[0].name
+  }
+  # The Datadog chart expects the key name "api-key".
+  data = {
+    "api-key" = var.datadog_api_key
+  }
+  type = "Opaque"
+}

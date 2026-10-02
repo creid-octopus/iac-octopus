@@ -1,0 +1,58 @@
+# Datadog chart values for the AKS demo cluster.
+# Chart reference: https://github.com/DataDog/helm-charts/tree/main/charts/datadog
+#
+# Goal: the smallest agent that accepts OpenTelemetry (OTLP) from apps,
+# tags data with Kubernetes metadata, and runs on B2s nodes.
+
+datadog:
+  # Change to your org's site if needed (us3/us5/eu/ap1 ...)
+  site: datadoghq.com
+  # Secret created by Terraform. Key name must be "api-key".
+  apiKeyExistingSecret: datadog-api-secret
+  clusterName: creid-aks-meta-nonproduction
+
+  # AKS kubelets use certificates the agent can't verify by default.
+  kubelet:
+    tlsVerify: false
+
+  # OTLP receiver. Apps send to http://$(HOST_IP):4318 (HTTP) or :4317 (gRPC).
+  otlp:
+    receiver:
+      protocols:
+        grpc:
+          enabled: true
+          endpoint: 0.0.0.0:4317
+          useHostPort: true
+        http:
+          enabled: true
+          endpoint: 0.0.0.0:4318
+          useHostPort: true
+
+  # Also expose the native APM intake on host port 8126 (optional fallback).
+  apm:
+    portEnabled: true
+
+  dogstatsd:
+    nonLocalTraffic: true
+
+  # Off to fit B2s nodes. Turn on later if needed.
+  logs:
+    enabled: false
+    containerCollectAll: false
+  networkMonitoring:
+    enabled: false
+
+# No admission controller or auto-injection needed: the app uses the OTel SDK.
+clusterAgent:
+  enabled: false
+
+agents:
+  containers:
+    agent:
+      resources:
+        requests: { cpu: 100m, memory: 200Mi }
+        limits:   { cpu: 300m, memory: 400Mi }
+    traceAgent:
+      resources:
+        requests: { cpu: 50m, memory: 100Mi }
+        limits:   { cpu: 200m, memory: 200Mi }
