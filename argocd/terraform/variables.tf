@@ -123,7 +123,7 @@ variable "gateway_name" {
 variable "gateway_chart_version" {
   description = "Helm chart version for the Octopus ArgoCD Gateway. Check: https://hub.docker.com/r/octopusdeploy/octopus-argocd-gateway-chart/tags"
   type        = string
-  default     = "1.23.0"
+  default     = "2.2.0"
 }
 
 # ─── Octopus space name ─────────────────────────────────────────────────────
@@ -158,4 +158,12 @@ variable "kubernetes_agent_chart_version" {
   description = "Helm chart major version constraint for the Kubernetes agent. Specify the major version to prevent breaking changes. Check: https://hub.docker.com/r/octopusdeploy/kubernetes-agent/tags"
   type        = string
   default     = "3.*.*"
+}
+
+# ─── Datadog ──────────────────────────────────────────────────────────────────
+
+variable "datadog_api_key" {
+  description = "Datadog API key — stored in a Kubernetes secret and referenced by the Helm chart via apiKeyExistingSecret"
+  type        = string
+  sensitive   = true
 }

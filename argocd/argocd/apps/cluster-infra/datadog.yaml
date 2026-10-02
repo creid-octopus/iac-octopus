@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: datadog
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    # Datadog chart. Argo CD pulls public Helm repos without registration.
+    - repoURL: https://helm.datadoghq.com
+      chart: datadog
+      targetRevision: "3.*.*"
+      helm:
+        valueFiles:
+          - $values/argocd/cluster-infra/datadog/values.yaml
+    # Values file from this repo
+    - repoURL: https://github.com/creid-octopus/iac-octopus
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    # Namespace and API key secret are created by Terraform (bootstrap.tf)
+    namespace: datadog
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
