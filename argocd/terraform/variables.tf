@@ -123,7 +123,7 @@ variable "gateway_name" {
 variable "gateway_chart_version" {
   description = "Helm chart version for the Octopus ArgoCD Gateway. Check: https://hub.docker.com/r/octopusdeploy/octopus-argocd-gateway-chart/tags"
   type        = string
-  default     = "1.23.0"
+  default     = "2.2.0"
 }
 
 # ─── Octopus space name ─────────────────────────────────────────────────────
